@@ -127,11 +127,17 @@ jobs:
       - name: Sign macOS DMG with self-signed certificate
         if: matrix.platform == 'macos-latest' && env.MACOS_SELF_SIGN_P12 != ''
         run: |
+          echo "Available identities:"
+          security find-identity -v -p codesigning
           DMG=$(find src-tauri/target -name "*.dmg" | head -1)
           if [ -n "$DMG" ]; then
-            IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Greptime Dashboard Code Signing" | awk -F '"' '{print $2}')
-            codesign --force --sign "$IDENTITY" --keychain build.keychain "$DMG"
-            echo "Signed: $DMG with identity: $IDENTITY"
+            IDENTITY=$(security find-identity -v build.keychain | grep "Greptime" | head -1 | awk -F '"' '{print $2}')
+            echo "Using identity: $IDENTITY"
+            if [ -n "$IDENTITY" ]; then
+              codesign --force --sign "$IDENTITY" --keychain build.keychain "$DMG"
+            else
+              echo "No identity found, skipping signing"
+            fi
           fi
 
       - name: Upload CA certificate to release (macOS only, once)
