@@ -1,7 +1,4 @@
 on:
-  push:
-    tags:
-      - '*'
   workflow_dispatch:
 
 name: Release docker image
