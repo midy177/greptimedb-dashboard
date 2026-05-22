@@ -28,7 +28,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/dashboard/query',
+      redirect: '/dashboard/logs-query',
     },
     ...appRoutes,
     client,

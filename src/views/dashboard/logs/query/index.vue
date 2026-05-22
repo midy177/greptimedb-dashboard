@@ -43,6 +43,9 @@
           v-if="editorType === 'builder'"
           ref="sqlBuilderRef"
           storage-key="logs-query-table"
+          preferred-database="public"
+          preferred-table="logs"
+          :exact-match-fields="['service_name', 'container_name', 'log_type']"
           :form-state="builderFormState"
           :default-form-state="defaultFormState"
         )
@@ -130,6 +133,8 @@
 <script setup lang="ts" name="LogsQuery">
   import { ref, computed, shallowRef, watch, onMounted, toRefs, nextTick } from 'vue'
   import { useStorage, useLocalStorage } from '@vueuse/core'
+  import { Message } from '@arco-design/web-vue'
+  import { useI18n } from 'vue-i18n'
   import SQLBuilder from '@/components/sql-builder/index.vue'
   import SqlTextEditor from '@/components/sql-text-editor/index.vue'
   import { replaceTimePlaceholders } from '@/utils/sql'
@@ -139,9 +144,20 @@
   import Pagination from './Pagination.vue'
 
   const timeRange = useTimeRange()
+  const { t } = useI18n()
   const { rangeTime, time, timeRangeValues } = timeRange
 
-  const builder = useSqlBuilderHook({ storageKey: 'logsquery-table', timeRangeValues })
+  const builder = useSqlBuilderHook({
+    storageKey: 'logsquery-table',
+    timeRangeValues,
+    defaultFormState: {
+      conditions: [
+        { field: 'log_type', operator: '=', value: '', relation: 'AND', fieldType: 'String' },
+        { field: 'service_name', operator: '=', value: '', relation: 'AND', fieldType: 'String' },
+        { field: 'container_name', operator: '=', value: '', relation: 'AND', fieldType: 'String' },
+      ],
+    },
+  })
   const { builderFormState, addFilterCondition, generateSql, defaultFormState } = builder
 
   const textEditor = useTextEditorState()
@@ -213,8 +229,11 @@
 
   async function handleExportConfirm(limit: number, formattedSql: string) {
     try {
-      await exportToCSV(limit)
-      exportModalVisible.value = false
+      const saved = await exportToCSV(limit)
+      if (saved) {
+        exportModalVisible.value = false
+        Message.success(t('common.exportSuccess'))
+      }
     } catch (error) {
       console.error('Export failed:', error)
     }
@@ -243,7 +262,7 @@
 
   const compact = useStorage('logquery-table-compact', false)
   const size = computed(() => (compact.value ? 'mini' : 'medium'))
-  const wrap = ref(false)
+  const wrap = ref(true)
 
   // Chart/row logic
   function handleTimeRangeUpdate(newTimeRange) {

@@ -151,19 +151,17 @@ const useQueryExecution = (builder, textEditor, timeRange) => {
     }
   }
 
-  async function exportToCSV(limit?: number) {
+  async function exportToCSV(limit?: number): Promise<boolean> {
     let currentQuery = queryState.sql
-    // Process $timestart and $timeend in the SQL string
     const currentTimeRanges = timeRange.timeRangeValues.value
     if (currentTimeRanges.length === 2) {
       const [startTs, endTs] = currentTimeRanges
       currentQuery = replaceTimePlaceholders(currentQuery, [startTs, endTs])
     }
     if (!currentQuery || !queryState.table) {
-      return
+      return false
     }
 
-    // Update LIMIT if provided
     if (limit !== undefined) {
       const { updateLimitInSql } = await import('@/views/dashboard/logs/query/until')
       currentQuery = updateLimitInSql(currentQuery, limit)
@@ -172,9 +170,10 @@ const useQueryExecution = (builder, textEditor, timeRange) => {
     try {
       const { default: editorAPI } = await import('@/api/editor')
       const result = await editorAPI.runSQLWithCSV(currentQuery)
-      const { default: fileDownload } = await import('js-file-download')
       const filename = queryState.table || 'query-result'
-      fileDownload(result as unknown as string, `${filename}.csv`)
+      const { default: saveFile } = await import('@/utils/save-file')
+      const saved = await saveFile(result as unknown as string, `${filename}.csv`)
+      return saved
     } catch (error) {
       console.error('Export failed:', error)
       throw error

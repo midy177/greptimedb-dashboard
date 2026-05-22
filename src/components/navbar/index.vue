@@ -58,7 +58,7 @@ NewsModal(ref="newsModal" :news-list="newsListMutable" :loading="isLoadingNews")
   const newsListMutable = computed(() => (newsList.value ? [...newsList.value] : []))
   const newsModal = ref()
 
-  const menu = menuTree.value[0].children
+  const menu = computed(() => menuTree.value[0]?.children ?? [])
 
   const dropDownLinks = [
     {

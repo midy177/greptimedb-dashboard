@@ -1,12 +1,16 @@
 import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { RouteRecordRaw, RouteRecordNormalized } from 'vue-router'
 import usePermission from '@/hooks/permission'
 import { useAppStore } from '@/store'
 import appClientMenus from '@/router/app-menus'
 
+const QUERY_MODE_ROUTES = new Set(['log-query', 'trace-query', 'sip'])
+
 export default function useMenuTree() {
   const permission = usePermission()
   const appStore = useAppStore()
+  const { queryMode } = storeToRefs(appStore)
   const appRoute = computed(() => {
     if (appStore.menuFromServer) {
       return appStore.appAsyncMenus
@@ -14,6 +18,7 @@ export default function useMenuTree() {
     return appClientMenus
   })
   const menuTree = computed(() => {
+    const isQueryMode = queryMode.value
     const copyRouter = JSON.parse(JSON.stringify(appRoute.value))
     copyRouter.sort((a: RouteRecordNormalized, b: RouteRecordNormalized) => {
       return (a.meta.order || 0) - (b.meta.order || 0)
@@ -22,8 +27,11 @@ export default function useMenuTree() {
       if (!_routes) return null
 
       const collector: any = _routes.map((element) => {
-        // no access
         if (!permission.accessRouter(element)) {
+          return null
+        }
+
+        if (isQueryMode && layer > 0 && element.name && !QUERY_MODE_ROUTES.has(element.name as string)) {
           return null
         }
 

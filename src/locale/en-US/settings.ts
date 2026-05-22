@@ -11,4 +11,9 @@ export default {
   'settings.saveSuccess': 'Success!',
   'settings.authHeader': 'Authentication Header Name',
   'settings.authHeaderTip': 'The name of the HTTP header that is used for authentication.',
+  'settings.defaultProfile': 'Default',
+  'settings.addProfile': 'Add Profile',
+  'settings.deleteProfile': 'Delete Profile',
+  'settings.profilePlaceholder': 'Select a profile',
+  'settings.profileNamePlaceholder': 'Enter profile name',
 }

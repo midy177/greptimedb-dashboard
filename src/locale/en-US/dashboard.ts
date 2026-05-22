@@ -86,6 +86,12 @@ export default {
   'dashboard.fetchingDatabases': 'Fetching databases...',
   'dashboard.database': 'Database',
   'metrics.showFullSeriesName': 'Show full series name',
+  'dashboard.dropColumn': 'Drop Column',
+  'dashboard.dropColumnTitle': 'Confirm Drop Column',
+  'dashboard.dropColumnConfirm':
+    'Are you sure you want to drop column {column} from table {table}? This action is irreversible.',
+  'dashboard.dropColumnSuccess': 'Column {column} dropped',
+  'dashboard.dropColumnFail': 'Failed to drop column',
   'dashboard.run': 'Run',
   'dashboard.perses.emptySidebar': 'No data',
   'dashboard.perses.emptyStateTitle': 'Get started by creating your first dashboard',

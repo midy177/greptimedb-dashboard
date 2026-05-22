@@ -12,6 +12,34 @@ a-drawer.settings-drawer(
   :footer="false"
   :drawer-style="{ bottom: MARGIN_BOTTOM }"
 )
+  //- Profile selector
+  .profile-bar
+    a-select.profile-select(
+      v-model="selectedProfileId"
+      :placeholder="$t('settings.profilePlaceholder')"
+      @change="onProfileChange"
+    )
+      a-option(
+        v-for="p of connectionProfiles"
+        :key="p.id"
+        :value="p.id"
+        :label="p.name"
+      )
+    a-tooltip(mini :content="$t('settings.addProfile')")
+      a-button(type="text" size="small" @click="showAddModal = true")
+        template(#icon)
+          icon-plus
+    a-tooltip(mini :content="$t('settings.deleteProfile')")
+      a-button(
+        type="text"
+        size="small"
+        status="danger"
+        :disabled="!selectedProfileId || connectionProfiles.length <= 1"
+        @click="onDeleteProfile"
+      )
+        template(#icon)
+          icon-delete
+
   a-form(layout="vertical" :model="settingsForm")
     a-form-item(:label="$t('settings.host')")
       a-input(v-model="settingsForm.host")
@@ -88,6 +116,21 @@ a-drawer.settings-drawer(
         span.success-color(v-if="loginStatus === 'success'")
           icon-check-circle
           | {{ $t('settings.saveSuccess') }}
+
+//- Add profile modal
+a-modal(
+  v-model:visible="showAddModal"
+  :title="$t('settings.addProfile')"
+  :ok-text="$t('common.create')"
+  @ok="onAddProfile"
+  @cancel="newProfileName = ''"
+)
+  a-input(
+    v-model="newProfileName"
+    allow-clear
+    :placeholder="$t('settings.profileNamePlaceholder')"
+    @keyup.enter="onAddProfile"
+  )
 </template>
 
 <script lang="ts" setup name="GlobalSetting">
@@ -100,13 +143,25 @@ a-drawer.settings-drawer(
   const appStore = useAppStore()
   const { checkTables } = useDataBaseStore()
 
-  const { globalSettings, host, database, username, password, databaseList, userTimezone, authHeader } =
-    storeToRefs(appStore)
+  const {
+    globalSettings,
+    host,
+    database,
+    username,
+    password,
+    databaseList,
+    userTimezone,
+    authHeader,
+    connectionProfiles,
+    activeProfileId,
+  } = storeToRefs(appStore)
 
   const loginStatus = ref('')
   const loginLoading = ref(false)
   const databasesLoading = ref(false)
-  const isValidTimezone = ref(true)
+  const showAddModal = ref(false)
+  const newProfileName = ref('')
+  const selectedProfileId = ref(activeProfileId.value)
 
   const settingsForm = ref({
     username: username.value,
@@ -118,15 +173,38 @@ a-drawer.settings-drawer(
     authHeader: authHeader.value,
   })
 
-  const checkTimezoneInput = (tz: string): boolean => {
-    // With select options, inputs are controlled and always valid
-    isValidTimezone.value = true
-    return true
-  }
-  const save = async () => {
-    if (!checkTimezoneInput(settingsForm.value.userTimezone)) {
-      return
+  const onProfileChange = (id: string) => {
+    appStore.switchProfile(id)
+    settingsForm.value = {
+      username: username.value,
+      password: password.value,
+      host: host.value,
+      databaseList: databaseList.value,
+      database: database.value,
+      userTimezone: userTimezone.value,
+      authHeader: authHeader.value || 'Authorization',
     }
+    loginStatus.value = ''
+  }
+
+  const onAddProfile = () => {
+    const name = newProfileName.value.trim()
+    if (!name) return
+    const profile = appStore.addProfile(name, settingsForm.value)
+    selectedProfileId.value = profile.id
+    appStore.switchProfile(profile.id)
+    newProfileName.value = ''
+    showAddModal.value = false
+  }
+
+  const onDeleteProfile = () => {
+    if (!selectedProfileId.value) return
+    appStore.deleteProfile(selectedProfileId.value)
+    selectedProfileId.value = connectionProfiles.value[0]?.id ?? ''
+    if (selectedProfileId.value) appStore.switchProfile(selectedProfileId.value)
+  }
+
+  const save = async () => {
     const tz = settingsForm.value.userTimezone?.trim() || ''
     settingsForm.value.userTimezone = tz
 
@@ -134,6 +212,12 @@ a-drawer.settings-drawer(
     const res = await appStore.validateAndSaveConnection(settingsForm.value)
     if (res) {
       loginStatus.value = 'success'
+
+      // keep profile name/id in sync after saving
+      if (selectedProfileId.value) {
+        const profile = connectionProfiles.value.find((p) => p.id === selectedProfileId.value)
+        if (profile) appStore.saveProfile({ ...profile, ...settingsForm.value })
+      }
 
       await appStore.refreshDatabaseList()
       settingsForm.value.databaseList = databaseList.value
@@ -153,7 +237,6 @@ a-drawer.settings-drawer(
     appStore.openGlobalSettings()
   }
 
-  // Timezone select options: UTC and UTC±HH:MM from -12:00 to +14:00
   const timezoneOptions = computed(() => {
     const opts: { label: string; value: string }[] = [{ label: 'UTC', value: 'UTC' }]
     for (let h = -12; h <= 14; h += 1) {
@@ -170,6 +253,7 @@ a-drawer.settings-drawer(
 
   watch(globalSettings, () => {
     if (globalSettings.value) {
+      selectedProfileId.value = activeProfileId.value
       settingsForm.value = {
         username: username.value,
         password: password.value,
@@ -185,6 +269,17 @@ a-drawer.settings-drawer(
 
   onMounted(async () => {
     await appStore.ensureConnectionHost()
+
+    // migrate existing single config into default profile if no profiles yet
+    if (connectionProfiles.value.length === 0) {
+      const profile = appStore.addProfile(t('settings.defaultProfile'))
+      selectedProfileId.value = profile.id
+      appStore.switchProfile(profile.id)
+    } else if (!selectedProfileId.value) {
+      selectedProfileId.value = connectionProfiles.value[0].id
+      appStore.switchProfile(selectedProfileId.value)
+    }
+
     const res = await appStore.refreshDatabaseList()
     settingsForm.value.databaseList = databaseList.value
     settingsForm.value.database = database.value
@@ -221,6 +316,17 @@ a-drawer.settings-drawer(
     svg {
       font-size: 18px;
       vertical-align: -4px;
+    }
+  }
+
+  .profile-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 12px;
+
+    .profile-select {
+      flex: 1;
     }
   }
 

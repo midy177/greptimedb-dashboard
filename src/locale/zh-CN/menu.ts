@@ -17,6 +17,7 @@ export default {
   'menu.dashboard.log-ingestion': '日志摄取',
   'menu.dashboard.logsQuery': 'Logs 查询',
   'menu.dashboard.logPipeline': 'Logs Pipeline',
+  'menu.dashboard.sip': 'SIP 流分析',
   'menu.dashboard.flow': 'Flow',
   'menu.dashboard.traces': 'Trace 查询',
   'menu.dashboard.perses': '仪表盘',

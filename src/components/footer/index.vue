@@ -13,6 +13,15 @@ a-layout-footer.footer
       .text {{ region.location }}
   .right
     a-space(:size="10")
+      a-tooltip(mini :content="queryMode ? $t('footer.switchFull') : $t('footer.switchQuery')")
+        a-tag.mode-tag(
+          style="cursor: pointer"
+          :color="queryMode ? 'arcoblue' : 'gray'"
+          @click="queryMode = !queryMode"
+        )
+          svg.mode-icon
+            use(:href="queryMode ? '#log-query' : '#apps'")
+          | {{ queryMode ? $t('footer.queryMode') : $t('footer.fullMode') }}
       a-select(
         v-if="dev"
         v-model="currentLocale"
@@ -29,7 +38,7 @@ a-layout-footer.footer
   import { getIconUrl } from '@/utils'
   import useLocale from '@/hooks/locale'
 
-  const { host, regionVendor, regionLocation, regionCountry, serviceName } = storeToRefs(useAppStore())
+  const { host, regionVendor, regionLocation, regionCountry, serviceName, queryMode } = storeToRefs(useAppStore())
   const { role } = storeToRefs(useUserStore())
   const { statusRight } = storeToRefs(useStatusBarStore())
 
@@ -44,6 +53,55 @@ a-layout-footer.footer
   // Not yet used in production
   const dev = import.meta.env.MODE === 'development'
 </script>
+
+<style lang="less" scoped>
+  .footer {
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--footer-height);
+
+    text-align: center;
+    font-size: 13px;
+    .arco-link {
+      display: flex;
+    }
+  }
+  .logo {
+    height: 18px;
+  }
+  .service-name {
+    color: var(--main-font-color);
+    font-weight: 600;
+  }
+  .service-icon {
+    height: 18px;
+    width: 18px;
+  }
+  .region {
+    .icon {
+      height: 13px;
+      width: auto;
+      margin-right: 6px;
+    }
+    .text {
+      margin-right: 10px;
+      color: var(--small-font-color);
+    }
+  }
+  .mode-tag {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    user-select: none;
+  }
+  .mode-icon {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+  }
+</style>
 
 <style lang="less" scoped>
   .footer {

@@ -16,15 +16,15 @@ export function useSqlBuilderHook(options: SqlBuilderHookOptions) {
   const { timeRangeValues, tsColumn, storageKey, defaultFormState } = options
   const initState = {
     table: '',
-    conditions: [],
+    conditions: [] as Condition[],
     orderByField: '',
     orderBy: 'DESC' as 'DESC' | 'ASC',
     limit: 1000,
     tsColumn: null,
     ...defaultFormState,
   }
-  // Initialize builder form state as reactive
-  const builderFormState = reactive<BuilderFormState>({ ...initState })
+  // Deep-clone initState so builderFormState mutations don't corrupt the defaults
+  const builderFormState = reactive<BuilderFormState>(JSON.parse(JSON.stringify(initState)))
 
   // // Persist form state to localStorage if storageKey is provided
   // if (storageKey) {

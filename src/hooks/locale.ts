@@ -7,7 +7,7 @@ export default function useLocale() {
 
   const STORAGE_KEY = 'greptime-locale'
 
-  const currentLocale = useLocalStorage(STORAGE_KEY, 'en-US')
+  const currentLocale = useLocalStorage(STORAGE_KEY, 'zh-CN')
 
   watch(currentLocale, (val) => {
     locale.value = val

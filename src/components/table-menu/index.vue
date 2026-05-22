@@ -26,7 +26,7 @@ a-dropdown.tables(trigger="click" position="right")
             use(href="#details")
         | {{ $t('dashboard.details') }}
     a-doption(v-if="!isColumn" click.stop)
-      a-space(v-for="item of SHORTCUT_MAP['TABLE']") 
+      a-space(v-for="item of SHORTCUT_MAP['TABLE']")
         ShortCut(
           icon
           :type="item.value"
@@ -50,6 +50,11 @@ a-dropdown.tables(trigger="click" position="right")
               :label="item.label"
               :database="database"
             )
+    a-doption(v-if="isColumn" @click="confirmDropColumn")
+      template(#icon)
+        svg.icon.danger-color
+          use(href="#delete")
+      span.danger-color {{ $t('dashboard.dropColumn') }}
     a-tooltip(content="Copy to Clipboard" position="right")
       a-doption(@click="copy(nodeData.title)")
         template(#icon)
@@ -58,12 +63,33 @@ a-dropdown.tables(trigger="click" position="right")
           svg.icon(v-else)
             icon-check.success-color
         | Copy name
+
+a-modal(
+  v-model:visible="dropModalVisible"
+  ok-status="danger"
+  :title="$t('dashboard.dropColumnTitle')"
+  :ok-text="$t('common.delete')"
+  :ok-loading="dropping"
+  @ok="doDropColumn"
+  @cancel="dropModalVisible = false"
+)
+  i18n-t(keypath="dashboard.dropColumnConfirm")
+    template(#column)
+      b {{ nodeData.title }}
+    template(#table)
+      b {{ parentTable?.title }}
 </template>
 
 <script lang="ts" setup name="TableMenu">
   import type { TableTreeParent } from '@/store/modules/database/types'
   import type { OptionsType } from '@/types/global'
   import { useClipboard } from '@vueuse/core'
+  import { Message } from '@arco-design/web-vue'
+  import { useI18n } from 'vue-i18n'
+  import editorAPI from '@/api/editor'
+  import { useDataBaseStore } from '@/store'
+
+  const { t } = useI18n()
 
   const props = defineProps<{
     nodeData: TableTreeParent
@@ -76,9 +102,37 @@ a-dropdown.tables(trigger="click" position="right")
   const source = ref('')
   const { copy, copied } = useClipboard({ source })
 
+  const dropModalVisible = ref(false)
+  const dropping = ref(false)
+
+  const parentTable = computed(() =>
+    props.expandedTablesTree ? props.expandedTablesTree[props.nodeData.parentKey] : null
+  )
+
   const expandChildren = (event: MouseEvent, nodeData: TableTreeParent, childrenType: string) => {
     event.stopPropagation()
     emits('expandChildren', event, nodeData, childrenType)
+  }
+
+  const confirmDropColumn = () => {
+    dropModalVisible.value = true
+  }
+
+  const doDropColumn = async () => {
+    if (!parentTable.value) return
+    dropping.value = true
+    try {
+      const sql = `ALTER TABLE "${parentTable.value.title}" DROP COLUMN "${props.nodeData.title}"`
+      await editorAPI.runSQL(sql, props.database)
+      Message.success(t('dashboard.dropColumnSuccess', { column: props.nodeData.title }))
+      dropModalVisible.value = false
+      const { checkTables } = useDataBaseStore()
+      checkTables()
+    } catch (e: any) {
+      Message.error(e?.message || t('dashboard.dropColumnFail'))
+    } finally {
+      dropping.value = false
+    }
   }
 
   const SHORTCUT_MAP: { [key: string]: OptionsType[] } = {

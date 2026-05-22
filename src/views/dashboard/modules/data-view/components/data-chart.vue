@@ -11,7 +11,7 @@ a-card(v-if="hasChart" :bordered="false")
         a-space(direction="vertical" :size="30")
           a-space(:size="10")
             icon-exclamation-circle-fill.warning-color
-            span.loading-tip {{ $tc('dashboard.chartLoadingTip', seriesCount, { count: seriesCount }) }}
+            span.loading-tip {{ $t('dashboard.chartLoadingTip', { count: seriesCount }) }}
           a-button(type="primary" @click="showChart")
             | {{ $t('dashboard.ok') }}
       Chart(:height="chartHeight" :option="chartOptions" :update-options="updateOptions")

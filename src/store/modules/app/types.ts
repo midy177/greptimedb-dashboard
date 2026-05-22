@@ -9,6 +9,11 @@ export interface ConnectionConfig {
   userTimezone: string
 }
 
+export interface ConnectionProfile extends ConnectionConfig {
+  id: string
+  name: string
+}
+
 export interface CloudContext {
   dbId?: string
   lifetime?: string

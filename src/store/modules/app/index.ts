@@ -4,12 +4,15 @@ import { isTauri } from '@tauri-apps/api/core'
 import defaultSettings from '@/config/settings.json'
 import editorAPI from '@/api/editor'
 import type { Ref } from 'vue'
-import type { AppState, ConnectionConfig, StoredConfig, UiConfig } from './types'
+import { nanoid } from 'nanoid'
+import type { AppState, ConnectionConfig, ConnectionProfile, StoredConfig, UiConfig } from './types'
 
 const useAppStore = defineStore('app', () => {
   // Persistent storage — declared first so state refs can use stored values as defaults
   const configStorage = useStorage<Partial<StoredConfig>>('config', {}, localStorage)
   const uiConfigStorage = useStorage<Partial<UiConfig>>('uiConfig', {}, localStorage)
+  const profilesStorage = useStorage<ConnectionProfile[]>('connection-profiles', [], localStorage)
+  const activeProfileIdStorage = useStorage<string>('active-profile-id', '', localStorage)
 
   // Apply URL-injected config once at startup (e.g. from cloud entry point)
   const urlParams = new URLSearchParams(window.location.search)
@@ -53,6 +56,11 @@ const useAppStore = defineStore('app', () => {
   const menuWidth = ref(ui.menuWidth ?? defaultSettings.menuWidth)
   const menuSelectedKey = ref(ui.menuSelectedKey ?? defaultSettings.menuSelectedKey)
   const hideSidebar = ref(ui.hideSidebar ?? defaultSettings.hideSidebar)
+  const queryMode = ref<boolean>(localStorage.getItem('greptime-query-mode') !== 'false')
+
+  watch(queryMode, (val) => {
+    localStorage.setItem('greptime-query-mode', String(val))
+  })
 
   // Runtime-only state (not persisted)
   const globalSettings = ref(defaultSettings.globalSettings)
@@ -149,6 +157,54 @@ const useAppStore = defineStore('app', () => {
     const normalized = normalizeConnectionConfig(config)
     patchAppState(normalized)
     configStorage.value = { ...configStorage.value, ...normalized }
+    // keep active profile in sync
+    if (activeProfileIdStorage.value) {
+      const idx = profilesStorage.value.findIndex((p) => p.id === activeProfileIdStorage.value)
+      if (idx !== -1) {
+        profilesStorage.value[idx] = { ...profilesStorage.value[idx], ...normalized } as ConnectionProfile
+      }
+    }
+  }
+
+  // --- Connection Profiles ---
+
+  const connectionProfiles = computed(() => profilesStorage.value)
+  const activeProfileId = computed(() => activeProfileIdStorage.value)
+
+  const saveProfile = (profile: ConnectionProfile) => {
+    const idx = profilesStorage.value.findIndex((p) => p.id === profile.id)
+    if (idx !== -1) profilesStorage.value[idx] = profile
+    else profilesStorage.value.push(profile)
+  }
+
+  const addProfile = (name: string, config: Partial<ConnectionConfig> = {}): ConnectionProfile => {
+    const profile: ConnectionProfile = {
+      id: nanoid(8),
+      name,
+      host: host.value,
+      database: database.value,
+      username: username.value,
+      password: password.value,
+      authHeader: authHeader.value,
+      userTimezone: userTimezone.value,
+      ...config,
+    }
+    profilesStorage.value.push(profile)
+    return profile
+  }
+
+  const deleteProfile = (id: string) => {
+    profilesStorage.value = profilesStorage.value.filter((p) => p.id !== id)
+    if (activeProfileIdStorage.value === id) {
+      activeProfileIdStorage.value = profilesStorage.value[0]?.id ?? ''
+    }
+  }
+
+  const switchProfile = (id: string) => {
+    const profile = profilesStorage.value.find((p) => p.id === id)
+    if (!profile) return
+    activeProfileIdStorage.value = id
+    saveConnectionConfig(profile)
   }
 
   const saveUiConfig = (config: Partial<UiConfig>) => {
@@ -168,7 +224,7 @@ const useAppStore = defineStore('app', () => {
   const ensureConnectionHost = async () => {
     if (host.value) return
 
-    const tauriEnv = await isTauri()
+    const tauriEnv = isTauri()
     const inferredHost = tauriEnv
       ? 'http://localhost:4000'
       : (() => {
@@ -270,6 +326,7 @@ const useAppStore = defineStore('app', () => {
     menuSelectedKey,
     userTimezone,
     hideSidebar,
+    queryMode,
     serviceName,
     regionVendor,
     regionLocation,
@@ -284,6 +341,12 @@ const useAppStore = defineStore('app', () => {
     refreshDatabaseList,
     tableCatalog,
     tableSchema,
+    connectionProfiles,
+    activeProfileId,
+    addProfile,
+    deleteProfile,
+    switchProfile,
+    saveProfile,
   }
 })
 

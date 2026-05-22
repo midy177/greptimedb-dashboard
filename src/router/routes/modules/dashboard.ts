@@ -6,7 +6,7 @@ const DASHBOARD: AppRouteRecordRaw = {
   path: '/dashboard',
   name: 'dashboard',
 
-  redirect: '/dashboard/query',
+  redirect: '/dashboard/logs-query',
   component: DEFAULT_LAYOUT,
   meta: {
     locale: 'menu.dashboard',
@@ -207,6 +207,18 @@ const DASHBOARD: AppRouteRecordRaw = {
         roles: ['admin', 'cloud'],
         hideInMenu: true,
         activeMenu: 'trace-query',
+      },
+    },
+    {
+      path: 'sip',
+      component: () => import('@/views/dashboard/sip/index.vue'),
+      name: 'sip',
+      meta: {
+        locale: 'menu.dashboard.sip',
+        requiresAuth: false,
+        icon: 'sip',
+        roles: ['admin', 'cloud'],
+        ignoreCache: true,
       },
     },
     {

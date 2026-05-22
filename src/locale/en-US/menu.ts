@@ -17,6 +17,7 @@ export default {
   'menu.dashboard.log-ingestion': 'Log Ingestion',
   'menu.dashboard.logsQuery': 'Logs Query',
   'menu.dashboard.logPipeline': 'Logs Pipelines',
+  'menu.dashboard.sip': 'SIP Analyzer',
   'menu.dashboard.flow': 'Flow',
   'menu.dashboard.traces': 'Traces Query',
   'menu.dashboard.perses': 'Dashboard',

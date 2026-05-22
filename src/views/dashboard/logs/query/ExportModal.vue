@@ -12,7 +12,7 @@ a-modal(
       a-button(type="primary" :loading="loading" @click="handleConfirm")
         | Export
   .export-modal-content
-    a-form(layout="vertical")
+    a-form(layout="vertical" :model="{ limit }")
       a-form-item
         template(#label)
           a-space(:size="4")
@@ -24,7 +24,7 @@ a-modal(
       a-form-item(:label="$t('logsQuery.exportLimit')")
         a-space(style="width: 100%" fill)
           a-input(
-            v-model.number="limit"
+            v-model="limit"
             type="number"
             style="flex: 1"
             placeholder="Enter limit"
@@ -56,7 +56,7 @@ a-modal(
     (event: 'cancel'): void
   }>()
 
-  const limit = ref(1000)
+  const limit = ref<string>('1000')
   const loading = ref(false)
   const totalCount = ref<number | null>(null)
 
@@ -123,7 +123,7 @@ a-modal(
     () => props.sql,
     (newSql) => {
       if (newSql) {
-        limit.value = parseLimit(newSql) || 1000
+        limit.value = String(parseLimit(newSql) || 1000)
         // Fetch total count when SQL changes
         fetchTotalCount()
       }
@@ -136,7 +136,7 @@ a-modal(
     () => props.visible,
     (newVisible) => {
       if (newVisible) {
-        limit.value = defaultLimit.value
+        limit.value = String(defaultLimit.value)
         fetchTotalCount()
       }
     }

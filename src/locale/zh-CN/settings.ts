@@ -11,4 +11,9 @@ export default {
   'settings.saveSuccess': '保存成功！',
   'settings.authHeader': '认证头名称',
   'settings.authHeaderTip': '用于认证的HTTP头的名称。',
+  'settings.defaultProfile': '默认配置',
+  'settings.addProfile': '新增配置',
+  'settings.deleteProfile': '删除当前配置',
+  'settings.profilePlaceholder': '选择连接配置',
+  'settings.profileNamePlaceholder': '请输入配置名称',
 }

@@ -65,7 +65,6 @@
             )
               // Default cell rendering (fallback when no custom slot provided)
               template(v-if="col.name === 'Merged_Column' && mergeColumn")
-                // Special rendering for merged column
                 span.entity-field(v-for="field in record.Merged_Column" :key="field[0]")
                   span(v-if="showKeys" style="color: var(--color-text-3)")
                     | {{ field[0] }}:
@@ -123,7 +122,6 @@ a-dropdown#td-context(
   }
 
   interface Props {
-    // Data
     data: TableData[]
     columns: ColumnType[]
     loading?: boolean

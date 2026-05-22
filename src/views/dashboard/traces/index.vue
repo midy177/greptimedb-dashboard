@@ -73,11 +73,14 @@
   import { ref, computed, watch, nextTick, onMounted } from 'vue'
   import { useLocalStorage } from '@vueuse/core'
   import { IconCode, IconDown, IconRight, IconDownload } from '@arco-design/web-vue/es/icon'
+  import { Message } from '@arco-design/web-vue'
+  import { useI18n } from 'vue-i18n'
   import SQLBuilder from '@/components/sql-builder/index.vue'
   import SqlTextEditor from '@/components/sql-text-editor/index.vue'
   import TraceTable from './components/TraceTable.vue'
 
   // 1. Time range state
+  const { t } = useI18n()
   const timeRange = useTimeRange()
   const { rangeTime, time, timeRangeValues } = timeRange
 
@@ -117,8 +120,9 @@
     Object.assign(textEditor.textEditorState, sqlInfo)
   }
 
-  function exportSql() {
-    exportToCSV()
+  async function exportSql() {
+    const saved = await exportToCSV()
+    if (saved) Message.success(t('common.exportSuccess'))
   }
 
   async function handleQuery() {

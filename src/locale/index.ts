@@ -26,14 +26,14 @@ function detectLocale(): string {
     return 'en-US'
   }
 
-  // 4) default to en-US
-  return 'en-US'
+  // 4) default to zh-CN
+  return 'zh-CN'
 }
 
 const i18n = createI18n({
+  legacy: false,
   locale: detectLocale(),
   fallbackLocale: 'en-US',
-  allowComposition: true,
   messages: {
     'en-US': en,
     'zh-CN': cn,

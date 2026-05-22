@@ -68,6 +68,16 @@ a-form.second-row-form(
               :placeholder="t('sqlBuilder.value')"
               :options="['true', 'false']"
             )
+            a-auto-complete.value(
+              v-else-if="props.exactMatchFields?.includes(condition.field) && (condition.operator === '=' || condition.operator === '!=')"
+              v-model="condition.value"
+              style="min-width: 120px; width: auto"
+              filter-option
+              :placeholder="t('sqlBuilder.value')"
+              :data="getFieldValueOptions(condition.field, index).map((o) => o.value)"
+              :loading="fieldValuesLoading[condition.field]"
+              @focus="fetchFieldValues(condition.field, index)"
+            )
             .resizable-wrapper(v-else)
               a-input.value(
                 v-model="condition.value"
@@ -208,10 +218,13 @@ a-modal(
   // Props for form state and configuration
   const props = defineProps<{
     formState: Form | null
-    tableFilter?: string // Optional filter for which tables to show (e.g., 'trace_id' for traces)
-    storageKey?: string // Optional storage key for localStorage (e.g., 'logs-query-table', 'traces-query-table')
-    quickFieldNames?: string[] // Array of field names for quick condition buttons
+    tableFilter?: string
+    storageKey?: string
+    quickFieldNames?: string[]
     defaultFormState?: Form
+    preferredTable?: string
+    preferredDatabase?: string
+    exactMatchFields?: string[] // Fields restricted to exact-match operators only
   }>()
 
   const tables = ref<string[]>([])
@@ -424,6 +437,14 @@ a-modal(
   }
 
   function getOperators(field: string) {
+    if (props.exactMatchFields?.includes(field)) {
+      return [
+        { label: '=', value: '=' },
+        { label: '!=', value: '!=' },
+        { label: 'IN', value: 'IN' },
+        { label: 'NOT IN', value: 'NOT IN' },
+      ]
+    }
     const fieldType = getFieldType(field)
     const operators = operatorMap[fieldType] || operatorMap.Default
 
@@ -431,6 +452,51 @@ a-modal(
       label: op,
       value: op,
     }))
+  }
+
+  const fieldValuesCache = ref<Record<string, string[]>>({})
+  const fieldValuesLoading = ref<Record<string, boolean>>({})
+
+  function buildPrecedingConditions(fieldName: string, conditionIndex: number): string {
+    if (!props.exactMatchFields) return ''
+    const preceding = form.conditions.filter(
+      (c, i) =>
+        i < conditionIndex &&
+        props.exactMatchFields.includes(c.field) &&
+        (c.operator === '=' || c.operator === '!=') &&
+        c.value !== ''
+    )
+    if (!preceding.length) return ''
+    return preceding.map((c) => `"${c.field}" ${c.operator} '${c.value}'`).join(' AND ')
+  }
+
+  async function fetchFieldValues(fieldName: string, conditionIndex: number) {
+    if (!form.table) return
+    const precedingFilter = buildPrecedingConditions(fieldName, conditionIndex)
+    const cacheKey = precedingFilter ? `${fieldName}__${precedingFilter}` : fieldName
+    if (fieldValuesCache.value[cacheKey]) return
+    fieldValuesLoading.value[fieldName] = true
+    try {
+      const tableName = form.database ? `"${form.database}"."${form.table}"` : `"${form.table}"`
+      const tsCol = tsColumn.value?.name
+      const clauses = [`"${fieldName}" IS NOT NULL`]
+      if (tsCol) clauses.push(`"${tsCol}" >= NOW() - INTERVAL '30 minutes'`)
+      if (precedingFilter) clauses.push(precedingFilter)
+      const whereClause = clauses.join(' AND ')
+      const sql = `SELECT DISTINCT "${fieldName}" FROM ${tableName} WHERE ${whereClause} ORDER BY "${fieldName}" LIMIT 200`
+      const result = await editorAPI.runSQL(sql, form.database)
+      fieldValuesCache.value[cacheKey] = result.output[0].records.rows.map((row: string[]) => row[0])
+    } catch {
+      fieldValuesCache.value[cacheKey] = []
+    } finally {
+      fieldValuesLoading.value[fieldName] = false
+    }
+  }
+
+  function getFieldValueOptions(fieldName: string, conditionIndex: number) {
+    const precedingFilter = buildPrecedingConditions(fieldName, conditionIndex)
+    const cacheKey = precedingFilter ? `${fieldName}__${precedingFilter}` : fieldName
+    return (fieldValuesCache.value[cacheKey] || []).map((v) => ({ label: v, value: v }))
   }
 
   async function fetchTables() {
@@ -448,12 +514,14 @@ a-modal(
       tables.value = result.output[0].records.rows.map((row: string[]) => row[0])
 
       // Validate and set table from localStorage or default
-      if (lastSelectedTable.value && tables.value.includes(lastSelectedTable.value)) {
-        // Use the remembered table if it still exists
+      const forcePreferred = props.preferredDatabase && props.preferredTable
+      if (!forcePreferred && lastSelectedTable.value && tables.value.includes(lastSelectedTable.value)) {
         form.table = lastSelectedTable.value
       } else if (tables.value.length > 0) {
-        // Use first available table if remembered table doesn't exist
-        form.table = tables.value[0]
+        const preferred = props.preferredTable
+        const exactMatch = preferred && tables.value.find((tbl) => tbl === preferred)
+        const prefixMatch = preferred && tables.value.find((tbl) => tbl.startsWith(preferred))
+        form.table = exactMatch || prefixMatch || tables.value[0]
       }
     } catch (error) {
       console.error('Failed to fetch tables:', error)
@@ -486,10 +554,8 @@ a-modal(
   }
 
   function handleTableChange() {
-    // Save the selected table to localStorage
     lastSelectedTable.value = form.table
-
-    // Reset form state for new table, preserve current table
+    fieldValuesCache.value = {}
     resetForm({ table: form.table })
   }
 
@@ -516,6 +582,10 @@ a-modal(
 
   function handleFieldChange(condition: Condition) {
     condition.fieldType = getFieldType(condition.field)
+    const validOps = getOperators(condition.field).map((o) => o.value)
+    if (!validOps.includes(condition.operator)) {
+      condition.operator = '='
+    }
   }
 
   function removeCondition(index: number) {
@@ -524,12 +594,12 @@ a-modal(
 
   // Initialize database list and form.database on mount
   onMounted(async () => {
-    // Fetch databases if not already loaded
     if (databaseList.value.length === 0) {
       await appStore.refreshDatabaseList()
     }
-    // Initialize form.database if not set or not in filtered list
-    if (!form.database || !filteredDatabaseList.value.includes(form.database)) {
+    if (props.preferredDatabase && filteredDatabaseList.value.includes(props.preferredDatabase)) {
+      form.database = props.preferredDatabase
+    } else if (!form.database || !filteredDatabaseList.value.includes(form.database)) {
       form.database = filteredDatabaseList.value[0] || database.value
     }
   })

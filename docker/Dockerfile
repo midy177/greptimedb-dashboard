@@ -1,14 +1,12 @@
-FROM --platform=linux/amd64 node:18-buster as builder
-## install pnpm
-RUN npm install -g pnpm
+FROM --platform=linux/amd64 oven/bun:1.3.13 as builder
 
 WORKDIR /greptimedb-dashboard
 
 ARG command=docker
 
 COPY . .
-RUN pnpm install
-RUN pnpm build:$command
+RUN bun install --frozen-lockfile
+RUN bun run build:$command
 
 FROM --platform=linux/amd64 nginx:1.23 as base
 
