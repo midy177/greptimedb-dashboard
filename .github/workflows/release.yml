@@ -60,6 +60,18 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
+      - name: Disable updater artifacts when signing key is unavailable
+        if: env.TAURI_SIGNING_PRIVATE_KEY == ''
+        shell: bash
+        run: |
+          bun --eval "
+            const fs = require('fs');
+            const path = 'src-tauri/tauri.conf.json';
+            const config = JSON.parse(fs.readFileSync(path, 'utf8'));
+            config.bundle.createUpdaterArtifacts = false;
+            fs.writeFileSync(path, JSON.stringify(config, null, 2) + '\n');
+          "
+
       - name: Import macOS certificate
         if: matrix.platform == 'macos-latest' && env.MACOS_CERTIFICATE != ''
         run: |
@@ -99,6 +111,8 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: Greptime Dashboard ${{ github.ref_name }}
+          releaseBody: Download the Windows, macOS, and Linux installers from the release assets.
           releaseDraft: false
           prerelease: false
+          releaseAssetNamePattern: Greptime-Dashboard-${{ github.ref_name }}-[platform]-[arch]-[bundle][setup][ext]
           args: ${{ matrix.args }}
