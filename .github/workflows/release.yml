@@ -84,7 +84,7 @@ jobs:
           echo "p12 size: $(wc -c < codesign.p12) bytes"
           openssl pkcs12 -in codesign.p12 -noout -passin pass: 2>&1 || echo "openssl check failed"
           security create-keychain -p "" build.keychain
-          security import codesign.p12 -k build.keychain -P "" -T /usr/bin/codesign
+          security import codesign.p12 -k build.keychain -T /usr/bin/codesign
           security list-keychains -s build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "" build.keychain
