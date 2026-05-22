@@ -7,6 +7,7 @@ on:
 
 jobs:
   dispatch:
+    if: ${{ github.repository_owner == 'GreptimeTeam' }}
     runs-on: ubuntu-latest
     steps:
       - name: Notify private repo to sync
