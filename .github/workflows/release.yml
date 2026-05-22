@@ -28,8 +28,8 @@ jobs:
     env:
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY || vars.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || vars.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-      MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
-      MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+      MACOS_SELF_SIGN_P12: ${{ secrets.MACOS_SELF_SIGN_P12 }}
+      MACOS_SELF_SIGN_PASSWORD: ${{ secrets.MACOS_SELF_SIGN_PASSWORD }}
       WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
       WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
       CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
@@ -80,16 +80,17 @@ jobs:
             fs.writeFileSync(path, JSON.stringify(config, null, 2) + '\n');
           "
 
-      - name: Import macOS certificate
-        if: matrix.platform == 'macos-latest' && env.MACOS_CERTIFICATE != ''
+      - name: Import macOS self-signed certificate
+        if: matrix.platform == 'macos-latest' && env.MACOS_SELF_SIGN_P12 != ''
         run: |
-          echo "$MACOS_CERTIFICATE" | base64 --decode > certificate.p12
+          echo "$MACOS_SELF_SIGN_P12" | base64 --decode > codesign.p12
           security create-keychain -p "" build.keychain
-          security import certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security import codesign.p12 -k build.keychain -P "$MACOS_SELF_SIGN_PASSWORD" -T /usr/bin/codesign
           security list-keychains -s build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "" build.keychain
           security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+          rm codesign.p12
 
       - name: Import Windows certificate
         if: matrix.platform == 'windows-latest' && env.WINDOWS_CERTIFICATE != ''
@@ -124,3 +125,23 @@ jobs:
           prerelease: false
           assetNamePattern: Greptime-Dashboard-${{ github.ref_name }}-[platform]-[arch]-[bundle][setup][ext]
           args: ${{ matrix.args }}
+
+      - name: Sign macOS DMG with self-signed certificate
+        if: matrix.platform == 'macos-latest' && env.MACOS_SELF_SIGN_P12 != ''
+        run: |
+          DMG=$(find src-tauri/target -name "*.dmg" | head -1)
+          if [ -n "$DMG" ]; then
+            IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Greptime Dashboard Code Signing" | awk -F '"' '{print $2}')
+            codesign --force --sign "$IDENTITY" --keychain build.keychain "$DMG"
+            echo "Signed: $DMG with identity: $IDENTITY"
+          fi
+
+      - name: Upload CA certificate to release (macOS only, once)
+        if: matrix.platform == 'macos-latest' && matrix.args == '--target aarch64-apple-darwin' && env.MACOS_SELF_SIGN_P12 != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: certs/ca.crt
+          name: Greptime Dashboard ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

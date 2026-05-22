@@ -1,0 +1,6 @@
+# Private keys - never commit these
+ca.key
+codesign.key
+codesign.p12
+*.p12
+*.p12.b64

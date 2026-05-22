@@ -29,25 +29,19 @@
     "active": true,
     "targets": "all",
     "createUpdaterArtifacts": true,
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ],
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
     "macOS": {
       "entitlements": null,
       "exceptionDomain": "",
       "frameworks": [],
       "minimumSystemVersion": "10.13",
-      "signingIdentity": "sun-code"
+      "signingIdentity": null
     }
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU2MzI1OTE1MUU0RjgzRjkKUldUNWcwOGVGVmt5VnIxOFpiMkxFK1l5dGsvczhzQ29YR1N0dXkzT0Z0TTB1OGY1eVlqTVQ2TXUK",
-      "endpoints": ["https://github.com/GreptimeTeam/dashboard/releases/latest/download/latest.json"]
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQyODI1Q0FBRUVCMDc0OTgKUldTWWRMRHVxbHlDMGxiUTIvdUhnK3RyS0FneHdySjdHRWZaZWRUSG4zRHp3SndwZUZ0T2JHRVoK",
+      "endpoints": ["https://github.com/midy177/greptimedb-dashboard/releases/latest/download/latest.json"]
     }
   }
 }
