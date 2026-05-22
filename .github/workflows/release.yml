@@ -83,13 +83,11 @@ jobs:
         if: matrix.platform == 'macos-latest' && env.MACOS_SELF_SIGN_P12 != ''
         run: |
           echo "$MACOS_SELF_SIGN_P12" | base64 --decode > codesign.p12
-          echo "p12 size: $(wc -c < codesign.p12) bytes"
           security create-keychain -p "build" build.keychain
-          security import codesign.p12 -k build.keychain -T /usr/bin/codesign
-          security list-keychains -s build.keychain
-          security default-keychain -s build.keychain
+          security set-keychain-settings -lut 21600 build.keychain
           security unlock-keychain -p "build" build.keychain
-          security set-key-partition-list -S apple-tool:,apple: -s -k "build" build.keychain
+          security import codesign.p12 -k build.keychain -f pkcs12 -A -P "greptime123"
+          security list-keychains -d user -s build.keychain $(security list-keychains -d user | sed s/\"//g)
           rm codesign.p12
 
       - name: Import Windows certificate
