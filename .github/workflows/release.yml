@@ -29,7 +29,6 @@ jobs:
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY || vars.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || vars.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       MACOS_SELF_SIGN_P12: ${{ secrets.MACOS_SELF_SIGN_P12 }}
-      MACOS_SELF_SIGN_PASSWORD: ${{ secrets.MACOS_SELF_SIGN_PASSWORD }}
       WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
       WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
       CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
@@ -85,7 +84,7 @@ jobs:
         run: |
           echo "$MACOS_SELF_SIGN_P12" | base64 --decode > codesign.p12
           security create-keychain -p "" build.keychain
-          security import codesign.p12 -k build.keychain -P "$MACOS_SELF_SIGN_PASSWORD" -T /usr/bin/codesign
+          security import codesign.p12 -k build.keychain -P "" -T /usr/bin/codesign
           security list-keychains -s build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "" build.keychain
