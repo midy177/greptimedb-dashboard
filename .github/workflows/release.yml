@@ -81,6 +81,8 @@ jobs:
         if: matrix.platform == 'macos-latest' && env.MACOS_SELF_SIGN_P12 != ''
         run: |
           echo "$MACOS_SELF_SIGN_P12" | base64 --decode > codesign.p12
+          echo "p12 size: $(wc -c < codesign.p12) bytes"
+          openssl pkcs12 -in codesign.p12 -noout -passin pass: 2>&1 || echo "openssl check failed"
           security create-keychain -p "" build.keychain
           security import codesign.p12 -k build.keychain -P "" -T /usr/bin/codesign
           security list-keychains -s build.keychain
