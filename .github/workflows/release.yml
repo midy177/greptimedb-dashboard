@@ -62,15 +62,20 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
-      - name: Disable updater artifacts when signing key is unavailable
-        if: env.TAURI_SIGNING_PRIVATE_KEY == ''
+      - name: Build frontend
+        run: node --max-old-space-size=8192 ./node_modules/vite/bin/vite.js build --config ./config/vite.config.prod.ts
+
+      - name: Prepare Tauri config for CI packaging
         shell: bash
         run: |
           bun --eval "
             const fs = require('fs');
             const path = 'src-tauri/tauri.conf.json';
             const config = JSON.parse(fs.readFileSync(path, 'utf8'));
-            config.bundle.createUpdaterArtifacts = false;
+            config.build.beforeBuildCommand = '';
+            if (!process.env.TAURI_SIGNING_PRIVATE_KEY) {
+              config.bundle.createUpdaterArtifacts = false;
+            }
             fs.writeFileSync(path, JSON.stringify(config, null, 2) + '\n');
           "
 
