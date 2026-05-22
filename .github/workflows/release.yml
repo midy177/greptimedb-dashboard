@@ -55,6 +55,7 @@ jobs:
 
   publish-tauri:
     needs: build
+    if: ${{ github.repository_owner == 'GreptimeTeam' }}
     permissions:
       contents: write
     strategy:
@@ -157,6 +158,7 @@ jobs:
   sync:
     name: Create PR to update VERSION
     needs: [build]
+    if: ${{ github.repository_owner == 'GreptimeTeam' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
