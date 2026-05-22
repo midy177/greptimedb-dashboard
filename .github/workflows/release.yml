@@ -114,5 +114,5 @@ jobs:
           releaseBody: Download the Windows, macOS, and Linux installers from the release assets.
           releaseDraft: false
           prerelease: false
-          releaseAssetNamePattern: Greptime-Dashboard-${{ github.ref_name }}-[platform]-[arch]-[bundle][setup][ext]
+          assetNamePattern: Greptime-Dashboard-${{ github.ref_name }}-[platform]-[arch]-[bundle][setup][ext]
           args: ${{ matrix.args }}
