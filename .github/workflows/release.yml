@@ -12,7 +12,6 @@ jobs:
   publish-tauri:
     name: Build desktop package (${{ matrix.platform }})
     runs-on: ${{ matrix.platform }}
-    environment: build
     permissions:
       contents: write
     strategy:
@@ -118,7 +117,18 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: Greptime Dashboard ${{ github.ref_name }}
-          releaseBody: Download the Windows, macOS, and Linux installers from the release assets.
+          releaseBody: |
+            Download the Windows, macOS, and Linux installers from the release assets.
+
+            ## macOS Installation
+
+            If you see **"Greptime Dashboard is damaged and can't be opened"**, run the following command in Terminal after installation:
+
+            ```bash
+            xattr -dr com.apple.quarantine "/Applications/Greptime Dashboard.app"
+            ```
+
+            This is caused by macOS Gatekeeper. The app is not notarized with an Apple Developer certificate.
           releaseDraft: false
           prerelease: false
           assetNamePattern: Greptime-Dashboard-${{ github.ref_name }}-[platform]-[arch]-[bundle][setup][ext]

@@ -23,7 +23,6 @@ a-layout-footer.footer
             use(:href="queryMode ? '#log-query' : '#apps'")
           | {{ queryMode ? $t('footer.queryMode') : $t('footer.fullMode') }}
       a-select(
-        v-if="dev"
         v-model="currentLocale"
         size="mini"
         :style="{ width: '112px' }"
@@ -49,9 +48,6 @@ a-layout-footer.footer
   }))
 
   const { currentLocale, onChangeLocale } = useLocale()
-
-  // Not yet used in production
-  const dev = import.meta.env.MODE === 'development'
 </script>
 
 <style lang="less" scoped>
