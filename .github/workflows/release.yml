@@ -12,6 +12,7 @@ jobs:
   publish-tauri:
     name: Build desktop package (${{ matrix.platform }})
     runs-on: ${{ matrix.platform }}
+    environment: build
     permissions:
       contents: write
     strategy:
