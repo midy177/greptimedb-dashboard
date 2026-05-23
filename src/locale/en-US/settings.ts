@@ -16,4 +16,12 @@ export default {
   'settings.deleteProfile': 'Delete Profile',
   'settings.profilePlaceholder': 'Select a profile',
   'settings.profileNamePlaceholder': 'Enter profile name',
+  'settings.checkUpdate': 'Check for updates',
+  'settings.updateAvailable': 'Install v{version}',
+  'settings.upToDate': 'Up to date',
+  'settings.installing': 'Installing...',
+  'settings.timezoneTip1': 'Use DST offsets from UTC, such as',
+  'settings.timezoneTip2': 'Or a timezone name, such as',
+  'settings.timezoneTip3': 'See more at',
+  'settings.timezoneTipWiki': 'Wiki.',
 }

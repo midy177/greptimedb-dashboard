@@ -26,18 +26,6 @@ a-layout.navbar
             template(#icon)
               svg.icon-16
                 use(href="#settings")
-      li
-        a-dropdown.menu-dropdown(trigger="hover" position="right" :popup-max-height="false")
-          a-button.menu-button(type="text")
-            template(#icon)
-              svg.icon
-                use(href="#menu")
-          template(#content)
-            a-doption(v-for="{ label, link } in dropDownLinks")
-              a-link(target="_blank" :href="link")
-                | {{ label }}
-            a-doption.news(@click="showNews")
-              | {{ $t('menu.news') }}
 NewsModal(ref="newsModal" :news-list="newsListMutable" :loading="isLoadingNews")
 </template>
 

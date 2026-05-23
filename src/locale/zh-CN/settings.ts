@@ -16,4 +16,12 @@ export default {
   'settings.deleteProfile': '删除当前配置',
   'settings.profilePlaceholder': '选择连接配置',
   'settings.profileNamePlaceholder': '请输入配置名称',
+  'settings.checkUpdate': '检查更新',
+  'settings.updateAvailable': '安装 v{version}',
+  'settings.upToDate': '已是最新版本',
+  'settings.installing': '安装中...',
+  'settings.timezoneTip1': '使用 UTC 偏移量，例如',
+  'settings.timezoneTip2': '或时区名称，例如',
+  'settings.timezoneTip3': '更多信息请参考',
+  'settings.timezoneTipWiki': 'Wiki。',
 }

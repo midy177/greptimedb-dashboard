@@ -98,12 +98,12 @@ a-drawer.settings-drawer(
       )
       template(#extra)
         div
-          | Use DST offsets from UTC, such as
+          | {{ $t('settings.timezoneTip1') }}
           span.bold {{ ` -07:00. ` }}
-          | Or a timezone name, such as
+          | {{ $t('settings.timezoneTip2') }}
           span.bold {{ ` US/Pacific. ` }}
-          | See more at
-          a-link(icon href="https://en.wikipedia.org/wiki/List_of_tz_database_time_zones" target="_blank") Wiki.
+          | {{ $t('settings.timezoneTip3') }}
+          a-link(icon href="https://en.wikipedia.org/wiki/List_of_tz_database_time_zones" target="_blank") {{ $t('settings.timezoneTipWiki') }}
     a-form-item.save
       a-button(
         type="primary"
@@ -116,6 +116,19 @@ a-drawer.settings-drawer(
         span.success-color(v-if="loginStatus === 'success'")
           icon-check-circle
           | {{ $t('settings.saveSuccess') }}
+
+  .update-section(v-if="isTauriEnv")
+    a-divider(style="margin: 8px 0")
+    .update-row
+      span.version-text v{{ appVersion }}
+      a-button(
+        type="text"
+        size="small"
+        :loading="isCheckingUpdate"
+        @click="checkUpdate"
+      ) {{ updateButtonText }}
+    .update-progress(v-if="isInstallingUpdate")
+      a-progress(size="small" :percent="updateProgress" :show-text="false")
 
 //- Add profile modal
 a-modal(
@@ -135,6 +148,10 @@ a-modal(
 
 <script lang="ts" setup name="GlobalSetting">
   import { useI18n } from 'vue-i18n'
+  import { isTauri } from '@tauri-apps/api/core'
+  import { getVersion } from '@tauri-apps/api/app'
+  import { check } from '@tauri-apps/plugin-updater'
+  import { relaunch } from '@tauri-apps/plugin-process'
   import { useAppStore, useDataBaseStore } from '@/store'
 
   const MARGIN_BOTTOM = `${38 * 2 + 8}px`
@@ -305,6 +322,66 @@ a-modal(
       databasesLoading.value = false
     }
   }
+
+  const isTauriEnv = isTauri()
+  const appVersion = ref('')
+  const isCheckingUpdate = ref(false)
+  const isInstallingUpdate = ref(false)
+  const updateProgress = ref(0)
+  const pendingUpdate = shallowRef<Awaited<ReturnType<typeof check>>>(null)
+  const updateStatus = ref<'idle' | 'available' | 'none'>('idle')
+
+  const updateButtonText = computed(() => {
+    if (isInstallingUpdate.value) return t('settings.installing')
+    if (updateStatus.value === 'available' && pendingUpdate.value)
+      return t('settings.updateAvailable', { version: pendingUpdate.value.version })
+    if (updateStatus.value === 'none') return t('settings.upToDate')
+    return t('settings.checkUpdate')
+  })
+
+  if (isTauriEnv) {
+    getVersion().then((v) => {
+      appVersion.value = v
+    })
+  }
+
+  const checkUpdate = async () => {
+    if (pendingUpdate.value) {
+      isInstallingUpdate.value = true
+      updateProgress.value = 0
+      let totalSize = 0
+      let downloaded = 0
+      try {
+        await pendingUpdate.value.downloadAndInstall((e) => {
+          if (e.event === 'Started') totalSize = e.data.contentLength ?? 0
+          if (e.event === 'Progress') {
+            downloaded += e.data.chunkLength
+            if (totalSize) updateProgress.value = Math.round((downloaded / totalSize) * 100)
+          }
+        })
+        await relaunch()
+      } catch (e) {
+        console.error(e)
+      } finally {
+        isInstallingUpdate.value = false
+      }
+      return
+    }
+    isCheckingUpdate.value = true
+    try {
+      const update = await check()
+      if (update) {
+        pendingUpdate.value = update
+        updateStatus.value = 'available'
+      } else {
+        updateStatus.value = 'none'
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      isCheckingUpdate.value = false
+    }
+  }
 </script>
 
 <style scoped lang="less">
@@ -340,6 +417,21 @@ a-modal(
       margin-left: 4px;
       padding: 0;
       font-size: 14px;
+    }
+  }
+
+  .update-section {
+    .update-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .version-text {
+      font-size: 12px;
+      color: var(--small-font-color);
+    }
+    .update-progress {
+      margin-top: 6px;
     }
   }
 </style>
