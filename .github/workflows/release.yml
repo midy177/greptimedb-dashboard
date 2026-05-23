@@ -25,7 +25,7 @@ jobs:
           - platform: windows-latest
             args: ''
     env:
-      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY || vars.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_B64: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY || vars.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || vars.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       MACOS_SELF_SIGN_P12: ${{ secrets.MACOS_SELF_SIGN_P12 }}
       WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
@@ -36,6 +36,16 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
+
+      - name: Decode signing key
+        shell: bash
+        run: |
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY_B64" ]; then
+            DECODED=$(echo "$TAURI_SIGNING_PRIVATE_KEY_B64" | base64 -d 2>/dev/null || echo "$TAURI_SIGNING_PRIVATE_KEY_B64")
+            echo "TAURI_SIGNING_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
+            echo "$DECODED" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          fi
 
       - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
