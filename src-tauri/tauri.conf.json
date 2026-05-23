@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Greptime Dashboard",
-  "version": "0.8.22",
+  "version": "0.8.23",
   "identifier": "com.greptime",
   "build": {
     "frontendDist": "../dist",
@@ -17,7 +17,7 @@
         "height": 800,
         "resizable": true,
         "fullscreen": false,
-        "devtools": true
+        "devtools": false
       }
     ],
     "security": {

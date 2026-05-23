@@ -13,6 +13,12 @@ import '@arco-design/web-vue/dist/arco.css'
 import '@/assets/style/global.less'
 import '@/api/interceptor'
 
+if (import.meta.env.PROD) {
+  document.addEventListener('contextmenu', (e) => {
+    e.preventDefault()
+  })
+}
+
 const app: App = createApp(Apps)
 
 app.config.errorHandler = (err, vm, info) => {
