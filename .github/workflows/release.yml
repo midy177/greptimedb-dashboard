@@ -72,9 +72,6 @@ jobs:
             const path = 'src-tauri/tauri.conf.json';
             const config = JSON.parse(fs.readFileSync(path, 'utf8'));
             config.build.beforeBuildCommand = '';
-            if (!process.env.TAURI_SIGNING_PRIVATE_KEY) {
-              config.bundle.createUpdaterArtifacts = false;
-            }
             fs.writeFileSync(path, JSON.stringify(config, null, 2) + '\n');
           "
 
@@ -157,5 +154,122 @@ jobs:
           tag_name: ${{ github.ref_name }}
           files: certs/ca.crt
           name: Greptime Dashboard ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Collect updater artifacts
+        shell: bash
+        run: |
+          mkdir -p updater-artifacts
+          # collect .sig files and the nsis/msi/app.tar.gz updater bundles
+          find src-tauri/target -name "*.sig" | while read f; do
+            cp "$f" updater-artifacts/
+          done
+          find src-tauri/target -name "*.app.tar.gz" | while read f; do
+            cp "$f" updater-artifacts/
+          done
+          find src-tauri/target -name "*.nsis.zip" -o -name "*.msi.zip" | while read f; do
+            cp "$f" updater-artifacts/
+          done
+          ls -la updater-artifacts/ || true
+
+      - name: Upload updater artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: updater-${{ matrix.platform }}-${{ strategy.job-index }}
+          path: updater-artifacts/
+          if-no-files-found: ignore
+          retention-days: 1
+
+  generate-latest-json:
+    name: Generate latest.json
+    needs: publish-tauri
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Download all updater artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: updater-*
+          path: updater-artifacts
+          merge-multiple: true
+
+      - name: List collected artifacts
+        run: ls -la updater-artifacts/ || echo "No artifacts found"
+
+      - name: Generate latest.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          REPO="midy177/greptimedb-dashboard"
+          BASE_URL="https://github.com/${REPO}/releases/download/${RELEASE_TAG}"
+
+          # Build platforms object from collected .sig files
+          PLATFORMS="{}"
+
+          for SIG_FILE in updater-artifacts/*.sig; do
+            [ -f "$SIG_FILE" ] || continue
+            BASENAME=$(basename "$SIG_FILE" .sig)
+            SIG=$(cat "$SIG_FILE")
+            URL="${BASE_URL}/${BASENAME}"
+
+            # Detect platform/arch from filename
+            case "$BASENAME" in
+              *aarch64-apple-darwin* | *aarch64_apple_darwin*)
+                PLATFORM="darwin-aarch64"
+                ;;
+              *x86_64-apple-darwin* | *x86_64_apple_darwin*)
+                PLATFORM="darwin-x86_64"
+                ;;
+              *x86_64*windows* | *x64-setup* | *.msi* | *.nsis*)
+                PLATFORM="windows-x86_64"
+                ;;
+              *x86_64*linux* | *amd64*)
+                PLATFORM="linux-x86_64"
+                ;;
+              *)
+                echo "Unrecognized platform for: $BASENAME, skipping"
+                continue
+                ;;
+            esac
+
+            PLATFORMS=$(echo "$PLATFORMS" | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          platform = '${PLATFORM}'
+          data[platform] = {'signature': '''${SIG}''', 'url': '${URL}'}
+          print(json.dumps(data))
+          ")
+          done
+
+          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          echo "$PLATFORMS" | python3 -c "
+          import json, sys
+          platforms = json.load(sys.stdin)
+          latest = {
+            'version': '${VERSION}',
+            'notes': 'See the release page for details.',
+            'pub_date': '${PUB_DATE}',
+            'platforms': platforms
+          }
+          print(json.dumps(latest, indent=2))
+          " > latest.json
+
+          echo "Generated latest.json:"
+          cat latest.json
+
+      - name: Upload latest.json to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: latest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
