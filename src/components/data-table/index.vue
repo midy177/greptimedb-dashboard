@@ -115,7 +115,7 @@ a-dropdown#td-context(
   import { dateTypes } from '@/views/dashboard/config'
   import { convertTimestampToMilliseconds } from '@/utils/date-time'
   import type { ColumnType, TSColumn } from '@/types/query'
-  import { useDateTimeFormat } from '@/hooks'
+  import { useDateTimeFormat } from '@/hooks/use-date-time-format'
 
   interface TableData {
     [key: string]: any

@@ -16,7 +16,7 @@ VCharts(
   import type { QueryState } from '@/types/query'
   import { replaceTimePlaceholders, getTableRefForSql } from '@/utils/sql'
   import { convertTimestampToMilliseconds } from '@/utils/date-time'
-  import { useDateTimeFormat } from '@/hooks'
+  import { useDateTimeFormat } from '@/hooks/use-date-time-format'
 
   interface Props {
     queryState: QueryState

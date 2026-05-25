@@ -55,7 +55,7 @@ a-modal.timestamp-assistance-modal(
   import dayjs from 'dayjs'
   import { Message } from '@arco-design/web-vue'
   import TimezoneInstantPicker from '@/components/time-select/instant-picker.vue'
-  import { useDateTimeFormat } from '@/hooks'
+  import { useDateTimeFormat } from '@/hooks/use-date-time-format'
 
   interface CMViewLike {
     state: any

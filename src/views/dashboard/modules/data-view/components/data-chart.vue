@@ -59,7 +59,7 @@ a-card(v-if="hasChart" :bordered="false")
   import type { datasetType, ResultType, ChartFormType, SeriesType } from '@/store/modules/code-run/types'
   import useDataChart from '@/hooks/data-chart'
   import { groupByToMap } from '@/utils'
-  import { useDateTimeFormat } from '@/hooks'
+  import { useDateTimeFormat } from '@/hooks/use-date-time-format'
   import { chartTypeOptions, updateOptions } from '../../../config'
 
   const props = defineProps({

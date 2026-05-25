@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "enables the default permissions",
   "windows": ["main", "client"],
-  "permissions": ["core:default", "updater:default", "dialog:default", "process:default", "core:webview:allow-create-webview-window", "fs:allow-write-text-file", "fs:allow-app-write"]
+  "permissions": ["core:default", "core:menu:default", "updater:default", "dialog:default", "process:default", "core:webview:allow-create-webview-window", "fs:allow-write-text-file", "fs:allow-app-write", "clipboard-manager:allow-read-text", "clipboard-manager:allow-write-text"]
 }

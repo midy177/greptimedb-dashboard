@@ -13,7 +13,7 @@ TimeSelect(
 </template>
 
 <script setup lang="ts">
-  import { computed, watch, defineModel } from 'vue'
+  import { computed, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
   import { getRelativeTimeMap, getRelativeTimeOptions } from '@/views/dashboard/config'
   import TimeSelect from '@/components/time-select/index.vue'

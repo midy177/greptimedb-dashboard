@@ -17,7 +17,7 @@ a-date-picker(
 
 <script lang="ts" setup name="TimezoneInstantPicker">
   import { computed, useAttrs } from 'vue'
-  import { useDashboardTimezone } from '@/hooks'
+  import { useDashboardTimezone } from '@/hooks/use-dashboard-timezone'
 
   const props = withDefaults(
     defineProps<{

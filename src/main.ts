@@ -13,9 +13,43 @@ import '@arco-design/web-vue/dist/arco.css'
 import '@/assets/style/global.less'
 import '@/api/interceptor'
 
-if (import.meta.env.PROD) {
-  document.addEventListener('contextmenu', (e) => {
-    e.preventDefault()
+const isTauri = '__TAURI_INTERNALS__' in window
+
+if (isTauri) {
+  if (import.meta.env.PROD) {
+    document.addEventListener('contextmenu', (e) => {
+      e.preventDefault()
+    })
+  }
+
+  // WKWebView on macOS does not route Cmd+C/V through the system responder chain.
+  import('@tauri-apps/plugin-clipboard-manager').then(({ readText, writeText }) => {
+    document.addEventListener('keydown', async (e) => {
+      const isMod = e.metaKey || e.ctrlKey
+      if (!isMod) return
+
+      if (e.key === 'c' || e.key === 'x') {
+        const selection = window.getSelection()?.toString()
+        if (selection) {
+          await writeText(selection)
+          if (e.key === 'x') {
+            document.execCommand('delete')
+          }
+        }
+      } else if (e.key === 'v') {
+        const active = document.activeElement as HTMLElement
+        const isEditable =
+          active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || active?.isContentEditable
+        if (isEditable) {
+          const text = await readText()
+          if (text) {
+            document.execCommand('insertText', false, text)
+          }
+        }
+      } else if (e.key === 'a') {
+        document.execCommand('selectAll')
+      }
+    })
   })
 }
 
@@ -23,7 +57,6 @@ const app: App = createApp(Apps)
 
 app.config.errorHandler = (err, vm, info) => {
   console.error(err, info)
-  // Optionally show an error message to users
 }
 
 app.use(ArcoVue, {})

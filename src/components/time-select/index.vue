@@ -56,7 +56,7 @@ a-trigger#time-select(
   import timezone from 'dayjs/plugin/timezone'
   import { useI18n } from 'vue-i18n'
   import { useAppStore } from '@/store'
-  import { useDashboardTimezone } from '@/hooks'
+  import { useDashboardTimezone } from '@/hooks/use-dashboard-timezone'
   // Timezone label formatter: 'UTC' stays 'UTC', '+08:00' -> 'UTC+8', '-05:00' -> 'UTC-5'
 
   dayjs.extend(utc)

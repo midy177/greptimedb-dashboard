@@ -47,7 +47,7 @@ a-card.metrics-chart(:bordered="false")
   import { useWindowSize } from '@vueuse/core'
   import Chart from '@/components/raw-chart/index.vue'
   import TimeRangeSelect from '@/components/time-range-select/index.vue'
-  import { useDateTimeFormat } from '@/hooks'
+  import { useDateTimeFormat } from '@/hooks/use-date-time-format'
 
   import dayjs from 'dayjs'
   import type { EChartsOption } from 'echarts'

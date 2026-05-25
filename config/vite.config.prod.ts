@@ -41,7 +41,7 @@ export default mergeConfig(
           }),
           Components({
             dts: true,
-            dirs: ['src/components', 'src/views'],
+            dirs: ['src/components'],
             extensions: ['vue', 'arco-design'],
             exclude: [/src\/perses-dashboard\/react\//, /src\/dashboard-main\.tsx/],
           }),
