@@ -950,8 +950,8 @@ a-layout.new-layout
 
   .flow-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 4px;
     margin-bottom: 3px;
   }
 
@@ -994,7 +994,8 @@ a-layout.new-layout
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 190px;
+    flex: 1;
+    min-width: 0;
   }
 
   .flow-footer {
