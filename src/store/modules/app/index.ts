@@ -1,10 +1,10 @@
 import { useStorage } from '@vueuse/core'
 import axios from 'axios'
 import { isTauri } from '@tauri-apps/api/core'
-import defaultSettings from '@/config/settings.json'
-import editorAPI from '@/api/editor'
 import type { Ref } from 'vue'
 import { nanoid } from 'nanoid'
+import defaultSettings from '@/config/settings.json'
+import editorAPI from '@/api/editor'
 import type { AppState, ConnectionConfig, ConnectionProfile, StoredConfig, UiConfig } from './types'
 
 const useAppStore = defineStore('app', () => {

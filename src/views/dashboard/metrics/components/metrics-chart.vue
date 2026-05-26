@@ -45,15 +45,15 @@ a-card.metrics-chart(:bordered="false")
 <script setup lang="ts">
   import { ref, computed, watch, nextTick, inject, type Ref, type ComputedRef } from 'vue'
   import { useWindowSize } from '@vueuse/core'
+  import dayjs from 'dayjs'
+  import type { EChartsOption } from 'echarts'
+  import { useI18n } from 'vue-i18n'
   import Chart from '@/components/raw-chart/index.vue'
   import TimeRangeSelect from '@/components/time-range-select/index.vue'
   import { useDateTimeFormat } from '@/hooks/use-date-time-format'
 
-  import dayjs from 'dayjs'
-  import type { EChartsOption } from 'echarts'
-  import { useI18n } from 'vue-i18n'
-  import StepSelector from './step-selector.vue'
   import type { MetricsContext } from '../types'
+  import StepSelector from './step-selector.vue'
 
   const metricsContext = inject<MetricsContext>('metricsContext')
   const {

@@ -81,11 +81,11 @@ a-modal(
 </template>
 
 <script lang="ts" setup name="TableMenu">
-  import type { TableTreeParent } from '@/store/modules/database/types'
-  import type { OptionsType } from '@/types/global'
   import { useClipboard } from '@vueuse/core'
   import { Message } from '@arco-design/web-vue'
   import { useI18n } from 'vue-i18n'
+  import type { OptionsType } from '@/types/global'
+  import type { TableTreeParent } from '@/store/modules/database/types'
   import editorAPI from '@/api/editor'
   import { useDataBaseStore } from '@/store'
 

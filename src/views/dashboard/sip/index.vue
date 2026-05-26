@@ -643,7 +643,7 @@ a-layout.new-layout
   @import '@/assets/style/new.less';
 
   .sip-body {
-    height: calc(100% - 48px);
+    height: calc(100vh - var(--layout-header-height) - var(--footer-height));
     overflow: hidden;
   }
 

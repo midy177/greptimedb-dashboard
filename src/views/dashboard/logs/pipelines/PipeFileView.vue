@@ -160,8 +160,8 @@ a-layout.full-height-layout.pipefile-view(
   import router from '@/router'
   import DataTable from '@/components/data-table/index.vue'
   import LangEditor from '@/components/lang-editor.vue'
-  import CreateTableModal from './create-table-modal/index.vue'
   import { toObj } from '../query/until'
+  import CreateTableModal from './create-table-modal/index.vue'
 
   const { t } = useI18n()
 

@@ -161,11 +161,11 @@ a-card.editor-card(style="padding-bottom: 10px" :bordered="false")
   import { Codemirror as CodeMirror } from 'vue-codemirror'
   import { keymap } from '@codemirror/view'
   import { acceptCompletion } from '@codemirror/autocomplete'
-  import type { PromForm } from '@/store/modules/code-run/types'
   import { useStorage } from '@vueuse/core'
-  import { sqlFormatter, parseSqlStatements, findStatementAtPosition, promqlFormatter } from '@/utils/sql'
   import { Message } from '@arco-design/web-vue'
   import fileDownload from 'js-file-download'
+  import { sqlFormatter, parseSqlStatements, findStatementAtPosition, promqlFormatter } from '@/utils/sql'
+  import type { PromForm } from '@/store/modules/code-run/types'
 
   import { durations, durationExamples, timeOptionsArray, queryTimeMap } from '../config'
 

@@ -33,11 +33,11 @@
   import { Codemirror as CodeMirror } from 'vue-codemirror'
   import { basicSetup } from 'codemirror'
   import { PromQLExtension } from '@prometheus-io/codemirror-promql'
-  import { useAppStore } from '@/store'
   import axios from 'axios'
   import { keymap, EditorView } from '@codemirror/view'
   import { Prec } from '@codemirror/state'
   import { IconLoading, IconPlayArrow } from '@arco-design/web-vue/es/icon'
+  import { useAppStore } from '@/store'
 
   const props = defineProps<{
     modelValue: string

@@ -50,8 +50,8 @@
   import type { ColumnType } from '@/types/query'
   import editorAPI from '@/api/editor'
   import DataTable from '@/components/data-table/index.vue'
-  import FlowDetailModal from './components/flow-detail-modal.vue'
   import { toObj } from '../logs/query/until'
+  import FlowDetailModal from './components/flow-detail-modal.vue'
 
   // Define the desired column order
   const displayedColumns = [

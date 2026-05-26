@@ -8,10 +8,10 @@
 </template>
 
 <script lang="ts" setup name="SimpleCodeEditor">
-  import i18n from '@/locale'
   import { Codemirror as CodeMirror } from 'vue-codemirror'
   import { Message } from '@arco-design/web-vue'
   import { oneDark } from '@codemirror/theme-one-dark'
+  import i18n from '@/locale'
   import mapLanguages from '@/components/markdown-render/components/utils'
 
   // data

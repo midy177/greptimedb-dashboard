@@ -17,8 +17,8 @@ a-layout.layout
 </template>
 
 <script lang="ts" setup name="Playground">
-  import { getPlaygroundInfo } from '@/api/playground'
   import parseMD from 'parse-md'
+  import { getPlaygroundInfo } from '@/api/playground'
   // data
   const appStore = useAppStore()
   const router = useRouter()

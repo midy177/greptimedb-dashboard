@@ -11,7 +11,7 @@ a-card.table-manager(:bordered="false")
       )
         template(#icon)
           svg.icon.brand-color
-            use(href="#refresh") 
+            use(href="#refresh")
     a-space
       a-space(align="center" :size="10")
         a-tooltip(
@@ -34,7 +34,7 @@ a-card.table-manager(:bordered="false")
         :allow-search="true"
         :placeholder="$t('dashboard.searchDatabase')"
         @change="onDatabaseChange"
-      ) 
+      )
         template(#prefix)
           span.database-label {{ $t('dashboard.database') }}
           span.divider(style="margin-right: 6px") |
@@ -236,7 +236,7 @@ a-card.table-manager(:bordered="false")
   })
 
   const virtualListHeight = computed(() => {
-    const maxHeight = `calc(100vh - var(--tables-header-height) - var(--footer-height))`
+    const maxHeight = `calc(100vh - var(--layout-header-height) - var(--footer-height))`
     return maxHeight
   })
 

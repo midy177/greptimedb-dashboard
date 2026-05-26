@@ -1,11 +1,11 @@
-import editorAPI from '@/api/editor'
-import { SEMANTIC_TYPE_MAP } from '@/views/dashboard/config'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { sql } from '@codemirror/lang-sql'
 import { PromQLExtension } from '@prometheus-io/codemirror-promql'
 import { basicSetup } from 'codemirror'
-import { ScriptTreeData, TableDetail, TableTreeChild, TableTreeParent } from './types'
+import { SEMANTIC_TYPE_MAP } from '@/views/dashboard/config'
+import editorAPI from '@/api/editor'
 import { RecordsType, SchemaType } from '../code-run/types'
+import { ScriptTreeData, TableDetail, TableTreeChild, TableTreeParent } from './types'
 
 const useDataBaseStore = defineStore('database', () => {
   const { database } = storeToRefs(useAppStore())

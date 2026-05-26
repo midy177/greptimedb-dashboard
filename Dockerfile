@@ -14,4 +14,4 @@ RUN bun install --frozen-lockfile --prefer-offline --ignore-scripts && \
 FROM hub.yeastardigital.com/novo-one/static-server:1.0.0 AS runtime
 
 # 复制构建好的静态资源
-COPY --from=builder /app/dist/ /app/static/
+COPY --from=builder /app/dist/ /app/static/dashboard/

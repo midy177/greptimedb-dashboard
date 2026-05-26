@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig } from 'axios'
-import { useAppStore } from '@/store'
 import { lib } from 'markdown-it/lib/common/utils'
+import { useAppStore } from '@/store'
 
 const prometheusBaseURL = `/v1/prometheus/api/v1`
 

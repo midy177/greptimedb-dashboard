@@ -145,12 +145,12 @@ a-drawer.custom-drawer(
   import { ref, reactive, watch, computed } from 'vue'
   import { Message } from '@arco-design/web-vue'
   import { storeToRefs } from 'pinia'
+  import dayjs from 'dayjs'
   import LangEditor from '@/components/lang-editor.vue'
   import editorAPI from '@/api/editor'
   import { useAppStore } from '@/store'
   import type { ColumnType } from '@/types/query'
   import { convertTimestampToMilliseconds } from '@/utils/date-time'
-  import dayjs from 'dayjs'
 
   interface Props {
     visible: boolean

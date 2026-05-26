@@ -40,10 +40,10 @@ a-layout.new-layout
 </template>
 
 <script lang="ts" setup name="Ingest">
-  import useMenuTree from '@/components/menu/use-menu-tree'
   import { useStorage } from '@vueuse/core'
-  import type { StatusContentSimple } from '@/store/modules/status-bar'
   import { driver } from 'driver.js'
+  import useMenuTree from '@/components/menu/use-menu-tree'
+  import type { StatusContentSimple } from '@/store/modules/status-bar'
   import LogsNew from '@/views/dashboard/modules/logs-new.vue'
   import 'driver.js/dist/driver.css'
   import { navbarSteps } from '../config'

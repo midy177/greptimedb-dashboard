@@ -1,17 +1,17 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import Message from '@arco-design/web-vue/es/message'
+import dayjs from 'dayjs'
 import i18n from '@/locale'
 import editorAPI from '@/api/editor'
 import { postPipelineLogs } from '@/api/pipeline'
-import dayjs from 'dayjs'
 import { dateTypes } from '@/views/dashboard/config'
 import { AnyObject } from '@/types/global'
 import { HttpResponse, OutputType } from '@/api/interceptor'
 import { isObject } from '@/utils/is'
 import { parseSqlStatements } from '@/utils/sql'
-import { ResultType, DimensionType, SchemaType, PromForm } from './types'
 import { Log, ResultInLog } from '../log/types'
+import { ResultType, DimensionType, SchemaType, PromForm } from './types'
 
 const useCodeRunStore = defineStore('codeRun', () => {
   const results = ref<ResultType[]>([])

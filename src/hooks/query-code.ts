@@ -1,7 +1,7 @@
+import { EditorSelection } from '@codemirror/state'
 import { useCodeRunStore } from '@/store'
 import { ResultType, PromForm } from '@/store/modules/code-run/types'
 import { TableTreeParent } from '@/store/modules/database/types'
-import { EditorSelection } from '@codemirror/state'
 import { sqlFormatter } from '@/utils/sql'
 import { stringType } from './types'
 

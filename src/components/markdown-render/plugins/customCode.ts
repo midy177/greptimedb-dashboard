@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
-import { ChartFormType, PromForm, SchemaType } from '@/store/modules/code-run/types'
 import type MarkdownIt from 'markdown-it'
 import type { RenderRule } from 'markdown-it/lib/renderer'
+import { ChartFormType, PromForm, SchemaType } from '@/store/modules/code-run/types'
 
 export default function customCode(md: MarkdownIt) {
   const fence = md.renderer.rules.fence as RenderRule

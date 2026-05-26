@@ -11,8 +11,8 @@ a-space
 </template>
 
 <script setup name="StatusList" lang="ts">
-  import type { StatusContentType } from '@/store/modules/status-bar'
   import { isVNode } from 'vue'
+  import type { StatusContentType } from '@/store/modules/status-bar'
 
   const props = defineProps<{
     items: StatusContentType[]

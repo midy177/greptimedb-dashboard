@@ -67,12 +67,12 @@
   import { keymap } from '@codemirror/view'
   import { Codemirror as CodeMirror } from 'vue-codemirror'
   import { oneDark } from '@codemirror/theme-one-dark'
+  import { Message } from '@arco-design/web-vue'
   import useDataChart from '@/hooks/data-chart'
   import type { PromForm, ResultType } from '@/store/modules/code-run/types'
   import type { Log } from '@/store/modules/log/types'
   import { durations, durationExamples, timeOptionsArray, queryTimeMap } from '@/views/dashboard/config'
   import i18n from '@/locale'
-  import { Message } from '@arco-design/web-vue'
   import mapLanguages from './utils'
 
   // data

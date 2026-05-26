@@ -1,5 +1,10 @@
 <template lang="pug">
-a.social-link(:href="link" target="_blank" rel="noopener" v-html="svg")
+a.social-link(
+  target="_blank"
+  rel="noopener"
+  v-html="svg"
+  :href="link"
+)
 </template>
 
 <script lang="ts" setup>

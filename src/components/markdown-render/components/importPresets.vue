@@ -4,9 +4,9 @@ a-button(:loading="loading" @click="imp")
 </template>
 
 <script setup name="MarkdownImportButton" lang="ts">
+  import { Message } from '@arco-design/web-vue'
   import { importPresets } from '@/api/playground'
   import i18n from '@/locale'
-  import { Message } from '@arco-design/web-vue'
 
   // data
   const props = defineProps({

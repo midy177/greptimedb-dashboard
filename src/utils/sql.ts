@@ -1,6 +1,6 @@
 import { format as sqlFormat } from 'sql-formatter'
-import { formatPromqlQuery, type PromqlFormatResponse } from '@/api/formatter'
 import { Message } from '@arco-design/web-vue'
+import { formatPromqlQuery, type PromqlFormatResponse } from '@/api/formatter'
 
 export const parseSqlStatements = (sql: string): { text: string; start: number; end: number }[] => {
   if (!sql) return []

@@ -67,12 +67,12 @@ a-card.data-grid(:bordered="false")
 </template>
 
 <script lang="ts" setup>
+  import { Message } from '@arco-design/web-vue'
+  import { useClipboard } from '@vueuse/core'
   import { dateTypes, numberTypes } from '@/views/dashboard/config'
   import type { ResultType, SchemaType } from '@/store/modules/code-run/types'
   import { useDateTimeFormat } from '@/hooks/use-date-time-format'
-  import { Message } from '@arco-design/web-vue'
   import i18n from '@/locale'
-  import { useClipboard } from '@vueuse/core'
 
   const props = withDefaults(
     defineProps<{

@@ -49,14 +49,14 @@ function getStatics(component: any): Record<string, boolean> {
   if (component && component.$$typeof === REACT_MEMO_TYPE) {
     return MEMO_STATICS
   }
-  return TYPE_STATICS[component?.['$$typeof']] || REACT_STATICS
+  return TYPE_STATICS[component?.$$typeof] || REACT_STATICS
 }
 
-const defineProperty = Object.defineProperty
-const getOwnPropertyNames = Object.getOwnPropertyNames
-const getOwnPropertySymbols = Object.getOwnPropertySymbols
-const getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor
-const getPrototypeOf = Object.getPrototypeOf
+const { defineProperty } = Object
+const { getOwnPropertyNames } = Object
+const { getOwnPropertySymbols } = Object
+const { getOwnPropertyDescriptor } = Object
+const { getPrototypeOf } = Object
 const objectPrototype = Object.prototype
 
 export default function hoistNonReactStatics(
