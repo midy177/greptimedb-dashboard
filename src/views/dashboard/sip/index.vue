@@ -34,18 +34,20 @@ a-layout.new-layout
           .flow-list(v-else)
             .flow-item(v-for="flow in flows" :key="flow.call_id" :class="{ active: selectedCallId === flow.call_id }" @click="selectFlow(flow)" @contextmenu.prevent="onFlowContextMenu($event, flow)")
               .flow-header
-                span.call-id {{ flow.call_id }}
+                a-tooltip(mini :content="$t('sip.copyCallId')")
+                  span.call-id(@dblclick.stop="copyCallId(flow.call_id)") {{ flow.call_id }}
                 .flow-header-actions
-                  a-tooltip(mini :content="$t('sip.copyCallId')")
-                    a-button.copy-btn(type="text" size="mini" @click.stop="copyCallId(flow.call_id)")
-                      template(#icon)
-                        icon-copy
+                  a-button.copy-btn(type="text" size="mini" @click.stop="copyCallId(flow.call_id)")
+                    template(#icon)
+                      icon-copy
                   a-tag.status-tag(size="small" :color="methodColor(flow.last_method)") {{ flow.last_method }}
               .flow-footer
-                span.msg-count {{ flow.msg_count }} {{ $t('sip.messages') }}
-                a-button.export-btn(type="text" size="mini" @click.stop="exportFlow(flow)")
-                  template(#icon)
-                    icon-download
+                span.last-method(:style="{ color: methodColor(flow.last_method) }") {{ flow.last_method }}
+                .footer-right
+                  span.msg-count {{ flow.msg_count }} {{ $t('sip.messages') }}
+                  a-button.export-btn(type="text" size="mini" @click.stop="exportFlow(flow)")
+                    template(#icon)
+                      icon-download
     a-layout-content.layout-content
       .ladder-header-bar
         span.ladder-title {{ $t('sip.ladder') }}
@@ -1005,6 +1007,18 @@ a-layout.new-layout
     color: var(--small-font-color);
   }
 
+  .last-method {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: monospace;
+  }
+
+  .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
   .call-id-badge {
     font-size: 11px;
     color: var(--small-font-color);
@@ -1104,12 +1118,6 @@ a-layout.new-layout
     opacity: 0;
     transition: opacity 0.15s;
     padding: 0 2px;
-  }
-
-  .flow-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
   }
 
   .flow-item:hover .export-btn {
