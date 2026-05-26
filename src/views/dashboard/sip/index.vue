@@ -159,7 +159,7 @@
       const sql = `SELECT DISTINCT TRIM("${field}") AS val FROM hep_1 WHERE "${field}" IS NOT NULL AND TRIM("${field}") != '' AND greptime_timestamp >= NOW() - INTERVAL '30 minutes' ORDER BY val LIMIT 200`
       const result: any = await editorAPI.runSQL(sql, db)
       const rows = result.output?.[0]?.records?.rows || []
-      fieldOptions.value[field] = [...new Set(rows.map((r: any[]) => r[0]).filter(Boolean))]
+      fieldOptions.value[field] = [...new Set(rows.map((r: any[]) => r[0] as string).filter(Boolean))]
     } catch {
       // ignore
     }
@@ -644,7 +644,6 @@
   @import '@/assets/style/new.less';
 
   .sip-body {
-    height: calc(100vh - var(--tables-header-height) - var(--footer-height));
     overflow: hidden;
   }
 
