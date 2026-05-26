@@ -44,6 +44,7 @@ a-layout.new-layout
   import { useStorage } from '@vueuse/core'
   import type { StatusContentSimple } from '@/store/modules/status-bar'
   import { driver } from 'driver.js'
+  import LogsNew from '@/views/dashboard/modules/logs-new.vue'
   import 'driver.js/dist/driver.css'
   import { navbarSteps } from '../config'
 

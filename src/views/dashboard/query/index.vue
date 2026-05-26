@@ -63,6 +63,7 @@ a-layout.new-layout
   import { driver } from 'driver.js'
   import 'driver.js/dist/driver.css'
   import { navbarSteps, tableSteps } from '../config'
+  import LogsNew from '@/views/dashboard/modules/logs-new.vue'
 
   const { s, q, escape } = useMagicKeys()
   const activeElement = useActiveElement()
