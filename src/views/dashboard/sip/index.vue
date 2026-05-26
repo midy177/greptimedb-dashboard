@@ -701,9 +701,11 @@ a-layout.new-layout
     overflow-y: auto;
     overflow-x: hidden;
     padding: 8px 12px;
+    box-sizing: border-box;
+    width: 100%;
 
     > .arco-spin {
-      min-width: 100%;
+      width: 100%;
     }
   }
 
@@ -930,6 +932,7 @@ a-layout.new-layout
     display: flex;
     flex-direction: column;
     gap: 5px;
+    width: 100%;
   }
 
   .flow-item {
@@ -938,6 +941,8 @@ a-layout.new-layout
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.15s;
+    box-sizing: border-box;
+    width: 100%;
     min-width: 0;
     overflow: hidden;
 
