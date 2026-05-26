@@ -36,11 +36,9 @@ a-layout.new-layout
               .flow-header
                 a-tooltip(mini :content="$t('sip.copyCallId')")
                   span.call-id(@dblclick.stop="copyCallId(flow.call_id)") {{ flow.call_id }}
-                .flow-header-actions
-                  a-button.copy-btn(type="text" size="mini" @click.stop="copyCallId(flow.call_id)")
-                    template(#icon)
-                      icon-copy
-                  a-tag.status-tag(size="small" :color="methodColor(flow.last_method)") {{ flow.last_method }}
+                a-button.copy-btn(type="text" size="mini" @click.stop="copyCallId(flow.call_id)")
+                  template(#icon)
+                    icon-copy
               .flow-footer
                 span.last-method(:style="{ color: methodColor(flow.last_method) }") {{ flow.last_method }}
                 .footer-right
