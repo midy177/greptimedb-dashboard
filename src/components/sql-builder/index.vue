@@ -405,11 +405,25 @@ a-modal(
 
   // Operator mapping based on field data type (similar to log query)
   const operatorMap = {
-    String: ['=', '!=', 'LIKE', 'NOT LIKE', 'Not Exist', 'Exist', 'IN', 'NOT IN'],
+    String: ['=', '!=', 'MATCHES_TERM', 'LIKE', 'NOT LIKE', 'Not Exist', 'Exist', 'IN', 'NOT IN'],
     Number: ['=', '!=', '>', '>=', '<', '<=', 'Not Exist', 'Exist', 'IN', 'NOT IN'],
     Time: ['>', '>=', '<', '<=', 'Not Exist', 'Exist', 'IN', 'NOT IN'],
     Boolean: ['=', '!=', 'Not Exist', 'Exist'],
-    Default: ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE', 'Not Exist', 'Exist', 'IN', 'NOT IN'],
+    Default: [
+      '=',
+      '!=',
+      '>',
+      '<',
+      '>=',
+      '<=',
+      'MATCHES_TERM',
+      'LIKE',
+      'NOT LIKE',
+      'Not Exist',
+      'Exist',
+      'IN',
+      'NOT IN',
+    ],
   }
 
   function getFieldType(fieldName: string): string {
@@ -448,8 +462,11 @@ a-modal(
     const fieldType = getFieldType(field)
     const operators = operatorMap[fieldType] || operatorMap.Default
 
+    const labelMap: Record<string, string> = {
+      MATCHES_TERM: t('sqlBuilder.matchesTerm'),
+    }
     return operators.map((op) => ({
-      label: op,
+      label: labelMap[op] ?? op,
       value: op,
     }))
   }

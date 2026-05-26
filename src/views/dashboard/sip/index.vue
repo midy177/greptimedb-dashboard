@@ -8,6 +8,7 @@ a-layout.new-layout
     a-auto-complete(v-model="filterCallId" style="width: 140px" allow-clear placeholder="Call-ID" :data="fieldOptions.call_id" filter-option @focus="fetchFieldOptions('call_id')" @change="loadFlows" @clear="loadFlows")
     a-auto-complete(v-model="filterSrcIp" style="width:140px" allow-clear placeholder="src_ip" :data="fieldOptions.src_ip" filter-option @focus="fetchFieldOptions('src_ip')" @change="loadFlows" @clear="loadFlows")
     a-auto-complete(v-model="filterDstIp" style="width:140px" allow-clear placeholder="dst_ip" :data="fieldOptions.dst_ip" filter-option @focus="fetchFieldOptions('dst_ip')" @change="loadFlows" @clear="loadFlows")
+    a-input(v-model="filterPayload" style="width:160px" allow-clear :placeholder="$t('sip.payloadSearch')" @press-enter="loadFlows" @clear="loadFlows")
     a-select(v-model="methodFilter" style="width:130px" allow-clear :placeholder="$t('sip.allMethod')" @change="loadFlows")
       a-option(value="INVITE") INVITE
       a-option(value="REGISTER") REGISTER
@@ -72,6 +73,7 @@ a-layout.new-layout
               .header-endpoints
                 .ladder-endpoint(v-for="ep in endpoints" :key="ep" :class="{ 'ep-active': selectedEndpoint === ep }" @click.stop="selectEndpoint(ep)")
                   .ep-label {{ ep }}
+                  .ep-node-name(v-if="epNodeMap[ep]") {{ epNodeMap[ep] }}
                   .ep-vline
             .ladder-body
               .message-row(v-for="(msg, idx) in messages" :key="idx" :class="{ selected: selectedMsgIdx === idx }" @click="selectMessage(idx)")
@@ -79,10 +81,11 @@ a-layout.new-layout
                 .row-arrow-area
                   .vline(v-for="ep in endpoints" :key="ep")
                   .arrow-overlay(:style="arrowOverlayStyle(msg)")
-                    .arrow-body
-                    .arrow-head(:class="arrowDirection(msg)")
-                  .method-label(:style="methodLabelStyle(msg)")
-                    a-tag(size="small" :color="methodColor(msg.sip_method)") {{ msg.sip_method || '-' }}
+                    .method-label
+                      span(:style="{ color: msgColor(msg.label) }") {{ msg.label }}
+                    .arrow-shaft
+                      .arrow-body(:class="{ retrans: retransSet.has(idx) }" :style="retransSet.has(idx) ? { borderTopColor: msgColor(msg.label) } : { background: msgColor(msg.label) }")
+                      .arrow-head(:class="arrowDirection(msg)" :style="arrowHeadStyle(msg)")
       a-modal(v-model:visible="msgDetailVisible" :title="selectedMsg ? selectedMsg.sip_method : ''" :width="700" :footer="false")
         template(#default)
           div(v-if="selectedMsg")
@@ -91,6 +94,7 @@ a-layout.new-layout
               a-descriptions-item(:label="$t('sip.to')") {{ selectedMsg.dst_ip }}:{{ selectedMsg.dst_port }}
               a-descriptions-item(:label="$t('common.time')") {{ formatMsgTime(selectedMsg.timestamp) }}
               a-descriptions-item(:label="$t('sip.size')") {{ selectedMsg.payload_size }} B
+              a-descriptions-item(v-if="selectedMsg.node_name" :label="$t('sip.nodeName')") {{ selectedMsg.node_name }}
             pre.sip-payload {{ formatPayload(selectedMsg.payload) }}
       a-modal.ep-modal(v-model:visible="epDrawerVisible" unmount-on-close :title="selectedEndpoint" :width="600" :footer="false")
         template(#default)
@@ -100,16 +104,16 @@ a-layout.new-layout
               .ep-msg-item(v-for="(msg, i) in epMessages" :key="i" :class="{ active: selectedEpMsg === i }" @click="selectedEpMsg = selectedEpMsg === i ? null : i")
                 .ep-msg-header
                   span.ep-msg-time {{ formatMsgTime(msg.timestamp) }}
-                  a-tag(size="small" :color="methodColor(msg.sip_method)") {{ msg.sip_method || '-' }}
+                  a-tag(size="small" :color="methodColor(msg.label)") {{ msg.label || '-' }}
                   span.ep-direction(v-if="msg.src_ip")
                     span(:class="epKey(msg.src_ip, msg.src_port) === selectedEndpoint ? 'dir-out' : 'dir-in'")
                       | {{ epKey(msg.src_ip, msg.src_port) === selectedEndpoint ? $t('sip.dirOut') : $t('sip.dirIn') }}
                 .ep-msg-peer {{ epKey(msg.src_ip, msg.src_port) === selectedEndpoint ? epKey(msg.dst_ip, msg.dst_port) : epKey(msg.src_ip, msg.src_port) }}
                 pre.ep-payload(v-if="selectedEpMsg === i") {{ formatPayload(msg.payload) }}
-  .ctx-menu(v-if="ctxMenu.visible" :style="{ top: ctxMenu.y + 'px', left: ctxMenu.x + 'px' }" @click.stop)
-    .ctx-item(@click="exportFlow(ctxMenu.flow); ctxMenu.visible = false")
-      icon-download
-      span {{ $t('dashboard.exportCSV') }}
+.ctx-menu(v-if="ctxMenu.visible" :style="{ top: ctxMenu.y + 'px', left: ctxMenu.x + 'px' }" @click.stop)
+  .ctx-item(@click="exportFlow(ctxMenu.flow); ctxMenu.visible = false")
+    icon-download
+    span {{ $t('dashboard.exportCSV') }}
 </template>
 
 <script setup lang="ts" name="SipQuery">
@@ -141,6 +145,7 @@ a-layout.new-layout
   const filterCallId = ref('')
   const filterSrcIp = ref('')
   const filterDstIp = ref('')
+  const filterPayload = ref('')
   const methodFilter = ref<string | undefined>('')
 
   // 候选值缓存
@@ -161,6 +166,7 @@ a-layout.new-layout
 
   interface SipFlow {
     call_id: string
+    node_name: string
     src_ip: string
     src_port: string
     dst_ip: string
@@ -182,9 +188,10 @@ a-layout.new-layout
       if (filterCallId.value) parts.push(`AND call_id = '${filterCallId.value.replace(/'/g, "''")}'`)
       if (filterSrcIp.value) parts.push(`AND src_ip = '${filterSrcIp.value.replace(/'/g, "''")}'`)
       if (filterDstIp.value) parts.push(`AND dst_ip = '${filterDstIp.value.replace(/'/g, "''")}'`)
+      if (filterPayload.value) parts.push(`AND matches_term(payload, '${filterPayload.value.replace(/'/g, "''")}')`)
       if (methodFilter.value) parts.push(`AND sip_method = '${methodFilter.value}'`)
       const filterWhere = parts.join(' ')
-      const sql = `SELECT call_id, MIN(src_ip) AS src_ip, MIN(src_port) AS src_port, MIN(dst_ip) AS dst_ip, MIN(dst_port) AS dst_port, MAX(sip_method) AS last_method, COUNT(*) AS msg_count, MIN(greptime_timestamp) AS start_time FROM hep_1 WHERE call_id IS NOT NULL AND call_id != '' ${timeWhere.value} ${filterWhere} GROUP BY call_id ORDER BY start_time DESC LIMIT 200`
+      const sql = `SELECT call_id, MIN(node_name) AS node_name, MIN(src_ip) AS src_ip, MIN(src_port) AS src_port, MIN(dst_ip) AS dst_ip, MIN(dst_port) AS dst_port, MAX(sip_method) AS last_method, COUNT(*) AS msg_count, MIN(greptime_timestamp) AS start_time FROM hep_1 WHERE call_id IS NOT NULL AND call_id != '' ${timeWhere.value} ${filterWhere} GROUP BY call_id ORDER BY start_time DESC LIMIT 200`
 
       const result: any = await editorAPI.runSQL(sql, db)
       const schema = result.output?.[0]?.records?.schema?.column_schemas || []
@@ -193,6 +200,7 @@ a-layout.new-layout
 
       flows.value = rows.map((row: any[]) => ({
         call_id: row[colIdx('call_id')],
+        node_name: row[colIdx('node_name')] || '',
         src_ip: row[colIdx('src_ip')],
         src_port: row[colIdx('src_port')],
         dst_ip: row[colIdx('dst_ip')],
@@ -210,11 +218,13 @@ a-layout.new-layout
 
   interface SipMessage {
     timestamp: string
+    node_name: string
     src_ip: string
     src_port: string
     dst_ip: string
     dst_port: string
     sip_method: string
+    label: string
     payload: string
     payload_size: number
   }
@@ -249,6 +259,12 @@ a-layout.new-layout
     return { left: `${left}%`, width: `${width}%` }
   }
 
+  function arrowHeadStyle(msg: SipMessage) {
+    const color = msgColor(msg.label)
+    const dir = arrowDirection(msg)
+    if (dir === 'right') return { borderLeftColor: color }
+    return { borderRightColor: color }
+  }
   function methodLabelStyle(msg: SipMessage) {
     const srcPct = epColCenter(msg.src_ip, msg.src_port)
     const dstPct = epColCenter(msg.dst_ip, msg.dst_port)
@@ -271,6 +287,16 @@ a-layout.new-layout
     return Array.from(set)
   })
 
+  const epNodeMap = computed(() => {
+    const map: Record<string, string> = {}
+    messages.value.forEach((m) => {
+      if (m.node_name && m.src_ip && !map[epKey(m.src_ip, m.src_port)]) {
+        map[epKey(m.src_ip, m.src_port)] = m.node_name
+      }
+    })
+    return map
+  })
+
   async function selectFlow(flow: SipFlow) {
     // 停止之前的轮询
     if (liveTimer) {
@@ -284,7 +310,7 @@ a-layout.new-layout
     try {
       const db = appStore.database || 'public'
       const escapedId = flow.call_id.replace(/'/g, "''")
-      const sql = `SELECT greptime_timestamp AS timestamp, src_ip, src_port, dst_ip, dst_port, sip_method, payload, payload_size FROM hep_1 WHERE call_id = '${escapedId}' ORDER BY greptime_timestamp ASC LIMIT 500`
+      const sql = `SELECT greptime_timestamp AS timestamp, node_name, src_ip, src_port, dst_ip, dst_port, sip_method, payload, payload_size FROM hep_1 WHERE call_id = '${escapedId}' ORDER BY greptime_timestamp ASC LIMIT 500`
       const result: any = await editorAPI.runSQL(sql, db)
       const schema = result.output?.[0]?.records?.schema?.column_schemas || []
       const rows = result.output?.[0]?.records?.rows || []
@@ -292,11 +318,13 @@ a-layout.new-layout
 
       messages.value = rows.map((row: any[]) => ({
         timestamp: row[colIdx('timestamp')],
+        node_name: row[colIdx('node_name')] || '',
         src_ip: row[colIdx('src_ip')],
         src_port: row[colIdx('src_port')],
         dst_ip: row[colIdx('dst_ip')],
         dst_port: row[colIdx('dst_port')],
         sip_method: row[colIdx('sip_method')],
+        label: extractLabel(row[colIdx('sip_method')], row[colIdx('payload')]),
         payload: row[colIdx('payload')],
         payload_size: row[colIdx('payload_size')],
       }))
@@ -341,7 +369,7 @@ a-layout.new-layout
     if (!selectedCallId.value) return
     const db = appStore.database || 'public'
     const escapedId = selectedCallId.value.replace(/'/g, "''")
-    const sql = `SELECT greptime_timestamp AS timestamp, src_ip, src_port, dst_ip, dst_port, sip_method, payload, payload_size FROM hep_1 WHERE call_id = '${escapedId}' ORDER BY greptime_timestamp ASC LIMIT 500`
+    const sql = `SELECT greptime_timestamp AS timestamp, node_name, src_ip, src_port, dst_ip, dst_port, sip_method, payload, payload_size FROM hep_1 WHERE call_id = '${escapedId}' ORDER BY greptime_timestamp ASC LIMIT 500`
     try {
       const result: any = await editorAPI.runSQL(sql, db)
       const schema = result.output?.[0]?.records?.schema?.column_schemas || []
@@ -349,11 +377,13 @@ a-layout.new-layout
       const colIdx = (name: string) => schema.findIndex((c: any) => c.name === name)
       messages.value = rows.map((row: any[]) => ({
         timestamp: row[colIdx('timestamp')],
+        node_name: row[colIdx('node_name')] || '',
         src_ip: row[colIdx('src_ip')],
         src_port: row[colIdx('src_port')],
         dst_ip: row[colIdx('dst_ip')],
         dst_port: row[colIdx('dst_port')],
         sip_method: row[colIdx('sip_method')],
+        label: extractLabel(row[colIdx('sip_method')], row[colIdx('payload')]),
         payload: row[colIdx('payload')],
         payload_size: row[colIdx('payload_size')],
       }))
@@ -427,6 +457,7 @@ a-layout.new-layout
         dst_ip: row[colIdx('dst_ip')],
         dst_port: row[colIdx('dst_port')],
         sip_method: row[colIdx('sip_method')],
+        label: extractLabel(row[colIdx('sip_method')], row[colIdx('payload')]),
         payload: row[colIdx('payload')],
         payload_size: row[colIdx('payload_size')],
       }))
@@ -457,21 +488,87 @@ a-layout.new-layout
     return dayjs(ms).format('HH:mm:ss.SSS')
   }
 
-  const METHOD_COLORS: Record<string, string> = {
-    INVITE: 'blue',
-    BYE: 'red',
-    CANCEL: 'orangered',
-    REGISTER: 'green',
-    OPTIONS: 'gray',
-    ACK: 'purple',
-    PRACK: 'cyan',
-    UPDATE: 'gold',
-    SUBSCRIBE: 'lime',
-    NOTIFY: 'pinkpurple',
+  // 从 payload 第一行解析 SIP 请求行或响应行，提取展示 label
+  function extractLabel(sipMethod: string, payload: string): string {
+    const firstLine = (payload || '')
+      .replace(/\\r\\n/g, '\n')
+      .replace(/\\n/g, '\n')
+      .split('\n')[0]
+      .trim()
+    const respMatch = firstLine.match(/^SIP\/2\.0\s+(\d{3})\s+(.+)/)
+    if (respMatch) return `${respMatch[1]} ${respMatch[2]}`
+    const reqMatch = firstLine.match(/^([A-Z]+)\s+\S+\s+SIP\//)
+    if (reqMatch) return reqMatch[1]
+    return sipMethod || '-'
   }
 
-  function methodColor(m: string) {
-    return METHOD_COLORS[m] || 'gray'
+  // 解析 sip_method 字段：请求方法直接返回，响应行解析出 "code reason"
+  function parseMsgLabel(method: string): string {
+    if (!method) return '-'
+    // 响应行格式: "SIP/2.0 200 OK" 或 "200 OK"
+    const respMatch = method.match(/(?:SIP\/2\.0\s+)?(\d{3})\s+(.+)/)
+    if (respMatch) return `${respMatch[1]} ${respMatch[2]}`
+    return method
+  }
+
+  // 是否是 SIP 响应
+  function isResponse(method: string): boolean {
+    return /^\d{3}[\s/]/.test(method) || /SIP\/2\.0\s+\d{3}/.test(method)
+  }
+
+  // 解析响应码数字
+  function responseCode(method: string): number {
+    const m = method.match(/(?:SIP\/2\.0\s+)?(\d{3})/)
+    return m ? parseInt(m[1], 10) : 0
+  }
+
+  const METHOD_COLORS: Record<string, string> = {
+    INVITE: '#1677ff',
+    BYE: '#f5222d',
+    CANCEL: '#fa8c16',
+    REGISTER: '#52c41a',
+    OPTIONS: '#8c8c8c',
+    ACK: '#722ed1',
+    PRACK: '#13c2c2',
+    UPDATE: '#faad14',
+    SUBSCRIBE: '#a0d911',
+    NOTIFY: '#eb2f96',
+  }
+
+  function msgColor(label: string): string {
+    if (!label || label === '-') return '#8c8c8c'
+    // 响应: 以数字开头 "200 OK", "180 Ringing"
+    const codeMatch = label.match(/^(\d{3})/)
+    if (codeMatch) {
+      const code = parseInt(codeMatch[1], 10)
+      if (code >= 100 && code < 200) return '#8c8c8c'
+      if (code >= 200 && code < 300) return '#52c41a'
+      if (code >= 300 && code < 400) return '#faad14'
+      if (code >= 400 && code < 500) return '#f5222d'
+      if (code >= 500) return '#a8071a'
+    }
+    return METHOD_COLORS[label.toUpperCase()] || '#1677ff'
+  }
+
+  // 重传检测：同 call_id 内相同 src/dst/method 在 3 秒内再次出现
+  const retransSet = computed(() => {
+    const seen = new Map<string, string>()
+    const retrans = new Set<number>()
+    messages.value.forEach((m, i) => {
+      const key = `${m.src_ip}:${m.src_port}|${m.dst_ip}:${m.dst_port}|${m.label}`
+      const prevTs = seen.get(key)
+      const curTs = String(m.timestamp)
+      if (prevTs) {
+        const diff = (Number(curTs) - Number(prevTs)) / 1_000_000_000
+        if (diff < 3) retrans.add(i)
+      }
+      seen.set(key, curTs)
+    })
+    return retrans
+  })
+
+  function methodColor(label: string) {
+    return msgColor(label)
   }
 
   // ---- 导出 ----
@@ -694,6 +791,16 @@ a-layout.new-layout
       white-space: nowrap;
     }
 
+    .ep-node-name {
+      font-size: 10px;
+      color: var(--color-text-3);
+      margin-top: 2px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .ep-vline {
       width: 2px;
       height: 8px;
@@ -714,7 +821,7 @@ a-layout.new-layout
     padding: 1px 0;
     cursor: pointer;
     border-radius: 3px;
-    min-height: 32px;
+    min-height: 36px;
     min-width: max-content;
 
     &:hover {
@@ -737,7 +844,7 @@ a-layout.new-layout
   .row-arrow-area {
     flex: 1;
     position: relative;
-    height: 32px;
+    height: 36px;
     display: flex;
     align-items: center;
     min-width: 400px;
@@ -761,54 +868,66 @@ a-layout.new-layout
     }
   }
 
+  // arrow-overlay 占满整行高度，label 上半部，箭头下半部
   .arrow-overlay {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    height: 16px;
+    height: 30px;
     pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
 
-    .arrow-body {
-      position: absolute;
-      top: 50%;
-      left: 0;
-      right: 8px;
-      height: 2px;
-      background: var(--brand-color);
-      transform: translateY(-50%);
+    .method-label {
+      font-size: 11px;
+      font-family: monospace;
+      font-weight: 600;
+      white-space: nowrap;
+      text-align: center;
+      line-height: 1;
+      margin-bottom: 3px;
     }
 
-    .arrow-head {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
+    .arrow-shaft {
+      position: relative;
+      height: 10px;
+      display: flex;
+      align-items: center;
 
-      &.right {
-        right: 0;
-        border-top: 5px solid transparent;
-        border-bottom: 5px solid transparent;
-        border-left: 8px solid var(--brand-color);
-      }
+      .arrow-body {
+        flex: 1;
+        height: 2px;
 
-      &.left {
-        left: 0;
-        border-top: 5px solid transparent;
-        border-bottom: 5px solid transparent;
-        border-right: 8px solid var(--brand-color);
-
-        & + .arrow-body {
-          left: 8px;
-          right: 0;
+        &.retrans {
+          background: none !important;
+          border-top: 2px dashed;
+          height: 0;
         }
       }
-    }
-  }
 
-  .method-label {
-    position: absolute;
-    top: -1px;
-    pointer-events: none;
-    white-space: nowrap;
+      .arrow-head {
+        flex-shrink: 0;
+        width: 0;
+        height: 0;
+
+        &.right {
+          border-top: 5px solid transparent;
+          border-bottom: 5px solid transparent;
+          border-left: 8px solid;
+        }
+
+        &.left {
+          border-top: 5px solid transparent;
+          border-bottom: 5px solid transparent;
+          border-right: 8px solid;
+        }
+      }
+
+      &:has(.arrow-head.left) {
+        flex-direction: row-reverse;
+      }
+    }
   }
 
   .flow-list {
@@ -839,6 +958,22 @@ a-layout.new-layout
     justify-content: space-between;
     align-items: center;
     margin-bottom: 3px;
+  }
+
+  .node-tag {
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .node-name {
+    display: inline-block;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: default;
   }
 
   .call-id {

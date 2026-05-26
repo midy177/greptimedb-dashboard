@@ -64,6 +64,8 @@ export function useSqlBuilderHook(options: SqlBuilderHookOptions) {
     }
 
     switch (operator) {
+      case 'MATCHES_TERM':
+        return `matches_term("${field}", '${escapeSqlString(String(value))}')`
       case 'LIKE':
         return `"${field}" LIKE '%${escapeSqlString(String(value))}%'`
       case 'NOT LIKE':
