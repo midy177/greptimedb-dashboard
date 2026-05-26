@@ -67,6 +67,14 @@ module.exports = {
     'no-param-reassign': 0,
     'prefer-regex-literals': 0,
     'import/no-extraneous-dependencies': 0,
+    'import/order': [
+      'error',
+      {
+        groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+        pathGroups: [{ pattern: '@/**', group: 'internal' }],
+        pathGroupsExcludedImportTypes: ['builtin'],
+      },
+    ],
     'noUnusedLocals': 0,
     'prefer-destructuring': ['error', { object: true, array: false }],
     'no-continue': 1,
