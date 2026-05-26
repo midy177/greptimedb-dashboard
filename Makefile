@@ -1,4 +1,4 @@
-.PHONY: test-ci-build build-macos build-macos-arm build-macos-x86 build-windows build-all release
+.PHONY: test-ci-build build-macos build-macos-arm build-macos-x86 build-windows build-all docker release
 
 VERSION ?= $(shell node -p "require('./src-tauri/tauri.conf.json').version")
 
@@ -35,6 +35,12 @@ build-windows:
 	bunx tauri build
 
 build-all: build-macos build-windows
+
+docker:
+	docker buildx build \
+		--platform linux/amd64 \
+		--push \
+		-t hub.yeastardigital.com/novo-one/greptimedb-dashboard:$(VERSION) .
 
 release:
 	@echo "Releasing v$(VERSION)..."
