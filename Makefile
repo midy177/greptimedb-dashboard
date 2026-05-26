@@ -1,6 +1,6 @@
 .PHONY: test-ci-build build-macos build-macos-arm build-macos-x86 build-windows build-all docker release
 
-VERSION ?= $(shell node -p "require('./src-tauri/tauri.conf.json').version")
+VERSION ?= $(shell grep '"version"' package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
 
 test-ci-build:
 	# 1. Clean old dependencies and build artifacts
@@ -37,6 +37,7 @@ build-windows:
 build-all: build-macos build-windows
 
 docker:
+	bun run build
 	docker buildx build \
 		--platform linux/amd64 \
 		--push \
