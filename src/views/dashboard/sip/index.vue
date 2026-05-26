@@ -1,116 +1,115 @@
 <!-- prettier-ignore -->
 <template lang="pug">
-  div
-    a-layout.new-layout
-      a-layout-header.sip-header
-        span.sip-title {{ $t('menu.dashboard.sip') }}
-        a-divider(direction="vertical")
-        TimeRangeSelect(button-type="outline" :time-length="time" :time-range="rangeTime" @update:time-length="(v) => (time = v)" @update:time-range="(v) => (rangeTime = v)")
-        a-auto-complete(v-model="filterCallId" style="width: 140px" allow-clear placeholder="Call-ID" :data="fieldOptions.call_id" filter-option @focus="fetchFieldOptions('call_id')" @change="loadFlows" @clear="loadFlows")
-        a-auto-complete(v-model="filterSrcIp" style="width:140px" allow-clear placeholder="src_ip" :data="fieldOptions.src_ip" filter-option @focus="fetchFieldOptions('src_ip')" @change="loadFlows" @clear="loadFlows")
-        a-auto-complete(v-model="filterDstIp" style="width:140px" allow-clear placeholder="dst_ip" :data="fieldOptions.dst_ip" filter-option @focus="fetchFieldOptions('dst_ip')" @change="loadFlows" @clear="loadFlows")
-        a-input(v-model="filterPayload" style="width:160px" allow-clear :placeholder="$t('sip.payloadSearch')" @press-enter="loadFlows" @clear="loadFlows")
-        a-select(v-model="methodFilter" style="width:130px" allow-clear :placeholder="$t('sip.allMethod')" @change="loadFlows")
-          a-option(value="INVITE") INVITE
-          a-option(value="REGISTER") REGISTER
-          a-option(value="OPTIONS") OPTIONS
-          a-option(value="BYE") BYE
-          a-option(value="CANCEL") CANCEL
-          a-option(value="ACK") ACK
-        a-button(type="primary" size="small" :loading="flowsLoading" @click="loadFlows")
-          template(#icon)
-            icon-loading(v-if="flowsLoading" spin)
-            icon-play-arrow(v-else)
-          | {{ $t('dashboard.run') }}
-        a-checkbox(size="small" :model-value="flowsLive" @update:modelValue="toggleFlowsLive")
-          span(style="color: var(--color-text-2)") {{ $t('logsQuery.live') }}
-      a-layout.sip-body
-        a-layout-sider.sip-sider(:width="300")
-          .sider-header
-            span.sider-title {{ $t('sip.flows') }}
-            a-tag(v-if="flows.length" color="arcoblue" size="small") {{ flows.length }}
-          .sider-body
-            a-spin(:loading="flowsLoading")
-              a-empty(v-if="!flowsLoading && flows.length === 0" :description="$t('sip.noFlows')")
-              .flow-list(v-else)
-                .flow-item(v-for="flow in flows" :key="flow.call_id" :class="{ active: selectedCallId === flow.call_id }" @click="selectFlow(flow)" @contextmenu.prevent="onFlowContextMenu($event, flow)")
-                  .flow-header
-                    span.call-id {{ flow.call_id }}
-                    a-tag.status-tag(size="small" :color="methodColor(flow.last_method)") {{ flow.last_method }}
-                  .flow-meta
-                    span.endpoint {{ flow.src_ip }}:{{ flow.src_port }}
-                    span.arrow →
-                    span.endpoint {{ flow.dst_ip }}:{{ flow.dst_port }}
-                  .flow-footer
-                    span.msg-count {{ flow.msg_count }} {{ $t('sip.messages') }}
-                    .time-group
-                      span.time {{ formatTime(flow.start_time) }}
-                      a-button.export-btn(type="text" size="mini" @click.stop="exportFlow(flow)")
-                        template(#icon)
-                          icon-download
-        a-layout-content.layout-content
-          .ladder-header-bar
-            span.ladder-title {{ $t('sip.ladder') }}
-            span.call-id-badge(v-if="selectedCallId") {{ selectedCallId }}
-            template(v-if="selectedCallId")
-              a-divider(direction="vertical")
-              a-tooltip(mini :content="liveRefresh ? $t('sip.stopLive') : $t('sip.startLive')")
-                a-button(size="mini" :type="liveRefresh ? 'primary' : 'outline'" @click="toggleLive")
-                  template(#icon)
-                    icon-loading(v-if="liveRefresh" spin)
-                    icon-refresh(v-else)
-                  | {{ liveRefresh ? $t('sip.live') : $t('sip.startLive') }}
-              a-tooltip(mini :content="$t('dashboard.exportCSV')")
-                a-button(size="mini" type="outline" :loading="exportingMessages" @click="exportMessages")
-                  template(#icon)
-                    icon-download
-          .ladder-content
-            a-spin(:loading="detailLoading")
-              a-empty(v-if="!detailLoading && !selectedCallId" :description="$t('sip.selectFlow')")
-              a-empty(v-else-if="!detailLoading && messages.length === 0" :description="$t('sip.noMessages')")
-              .ladder-diagram(v-else-if="messages.length > 0")
-                .ladder-header
-                  .header-time-col
-                  .header-endpoints
-                    .ladder-endpoint(v-for="ep in endpoints" :key="ep" :class="{ 'ep-active': selectedEndpoint === ep }" @click.stop="selectEndpoint(ep)")
-                      .ep-label {{ ep }}
-                      .ep-node-name(v-if="epNodeMap[ep]") {{ epNodeMap[ep] }}
-                      .ep-vline
-                .ladder-body
-                  .message-row(v-for="(msg, idx) in messages" :key="idx" :class="{ selected: selectedMsgIdx === idx }" @click="selectMessage(idx)")
-                    .row-time {{ formatMsgTime(msg.timestamp) }}
-                    .row-arrow-area
-                      .vline(v-for="ep in endpoints" :key="ep")
-                      .arrow-overlay(:style="arrowOverlayStyle(msg)")
-                        .method-label
-                          span(:style="{ color: msgColor(msg.label) }") {{ msg.label }}
-                        .arrow-shaft
-                          .arrow-body(:class="{ retrans: retransSet.has(idx) }" :style="retransSet.has(idx) ? { borderTopColor: msgColor(msg.label) } : { background: msgColor(msg.label) }")
-                          .arrow-head(:class="arrowDirection(msg)" :style="arrowHeadStyle(msg)")
-          a-modal(v-model:visible="msgDetailVisible" :title="selectedMsg ? selectedMsg.sip_method : ''" :width="700" :footer="false")
-            template(#default)
-              div(v-if="selectedMsg")
-                a-descriptions(:column="2" size="small" style="margin-bottom:12px")
-                  a-descriptions-item(:label="$t('sip.from')") {{ selectedMsg.src_ip }}:{{ selectedMsg.src_port }}
-                  a-descriptions-item(:label="$t('sip.to')") {{ selectedMsg.dst_ip }}:{{ selectedMsg.dst_port }}
-                  a-descriptions-item(:label="$t('common.time')") {{ formatMsgTime(selectedMsg.timestamp) }}
-                  a-descriptions-item(:label="$t('sip.size')") {{ selectedMsg.payload_size }} B
-                  a-descriptions-item(v-if="selectedMsg.node_name" :label="$t('sip.nodeName')") {{ selectedMsg.node_name }}
-                pre.sip-payload {{ formatPayload(selectedMsg.payload) }}
-          a-modal.ep-modal(v-model:visible="epDrawerVisible" unmount-on-close :title="selectedEndpoint" :width="600" :footer="false")
-            template(#default)
-              a-spin(style="width: 100%" :loading="epLoading")
-                a-empty(v-if="!epLoading && epMessages.length === 0" :description="$t('sip.noMessages')")
-                .ep-msg-list(v-if="epMessages.length > 0")
-                  .ep-msg-item(v-for="(msg, i) in epMessages" :key="i" :class="{ active: selectedEpMsg === i }" @click="selectedEpMsg = selectedEpMsg === i ? null : i")
-                    .ep-msg-header
-                      span.ep-msg-time {{ formatMsgTime(msg.timestamp) }}
-                      a-tag(size="small" :color="methodColor(msg.label)") {{ msg.label || '-' }}
-                      span.ep-direction(v-if="msg.src_ip")
-                        span(:class="epKey(msg.src_ip, msg.src_port) === selectedEndpoint ? 'dir-out' : 'dir-in'")
-                          | {{ epKey(msg.src_ip, msg.src_port) === selectedEndpoint ? $t('sip.dirOut') : $t('sip.dirIn') }}
-                    .ep-msg-peer {{ epKey(msg.src_ip, msg.src_port) === selectedEndpoint ? epKey(msg.dst_ip, msg.dst_port) : epKey(msg.src_ip, msg.src_port) }}
-                    pre.ep-payload(v-if="selectedEpMsg === i") {{ formatPayload(msg.payload) }}
+a-layout.new-layout
+  a-layout-header.sip-header
+    span.sip-title {{ $t('menu.dashboard.sip') }}
+    a-divider(direction="vertical")
+    TimeRangeSelect(button-type="outline" :time-length="time" :time-range="rangeTime" @update:time-length="(v) => (time = v)" @update:time-range="(v) => (rangeTime = v)")
+    a-auto-complete(v-model="filterCallId" style="width: 140px" allow-clear placeholder="Call-ID" :data="fieldOptions.call_id" filter-option @focus="fetchFieldOptions('call_id')" @change="loadFlows" @clear="loadFlows")
+    a-auto-complete(v-model="filterSrcIp" style="width:140px" allow-clear placeholder="src_ip" :data="fieldOptions.src_ip" filter-option @focus="fetchFieldOptions('src_ip')" @change="loadFlows" @clear="loadFlows")
+    a-auto-complete(v-model="filterDstIp" style="width:140px" allow-clear placeholder="dst_ip" :data="fieldOptions.dst_ip" filter-option @focus="fetchFieldOptions('dst_ip')" @change="loadFlows" @clear="loadFlows")
+    a-input(v-model="filterPayload" style="width:160px" allow-clear :placeholder="$t('sip.payloadSearch')" @press-enter="loadFlows" @clear="loadFlows")
+    a-select(v-model="methodFilter" style="width:130px" allow-clear :placeholder="$t('sip.allMethod')" @change="loadFlows")
+      a-option(value="INVITE") INVITE
+      a-option(value="REGISTER") REGISTER
+      a-option(value="OPTIONS") OPTIONS
+      a-option(value="BYE") BYE
+      a-option(value="CANCEL") CANCEL
+      a-option(value="ACK") ACK
+    a-button(type="primary" size="small" :loading="flowsLoading" @click="loadFlows")
+      template(#icon)
+        icon-loading(v-if="flowsLoading" spin)
+        icon-play-arrow(v-else)
+      | {{ $t('dashboard.run') }}
+    a-checkbox(size="small" :model-value="flowsLive" @update:modelValue="toggleFlowsLive")
+      span(style="color: var(--color-text-2)") {{ $t('logsQuery.live') }}
+  a-layout.sip-body
+    a-layout-sider.sip-sider(:width="300")
+      .sider-header
+        span.sider-title {{ $t('sip.flows') }}
+        a-tag(v-if="flows.length" color="arcoblue" size="small") {{ flows.length }}
+      .sider-body
+        a-spin(:loading="flowsLoading")
+          a-empty(v-if="!flowsLoading && flows.length === 0" :description="$t('sip.noFlows')")
+          .flow-list(v-else)
+            .flow-item(v-for="flow in flows" :key="flow.call_id" :class="{ active: selectedCallId === flow.call_id }" @click="selectFlow(flow)" @contextmenu.prevent="onFlowContextMenu($event, flow)")
+              .flow-header
+                span.call-id {{ flow.call_id }}
+                a-tag.status-tag(size="small" :color="methodColor(flow.last_method)") {{ flow.last_method }}
+              .flow-meta
+                span.endpoint {{ flow.src_ip }}:{{ flow.src_port }}
+                span.arrow →
+                span.endpoint {{ flow.dst_ip }}:{{ flow.dst_port }}
+              .flow-footer
+                span.msg-count {{ flow.msg_count }} {{ $t('sip.messages') }}
+                .time-group
+                  span.time {{ formatTime(flow.start_time) }}
+                  a-button.export-btn(type="text" size="mini" @click.stop="exportFlow(flow)")
+                    template(#icon)
+                      icon-download
+    a-layout-content.layout-content
+      .ladder-header-bar
+        span.ladder-title {{ $t('sip.ladder') }}
+        span.call-id-badge(v-if="selectedCallId") {{ selectedCallId }}
+        template(v-if="selectedCallId")
+          a-divider(direction="vertical")
+          a-tooltip(mini :content="liveRefresh ? $t('sip.stopLive') : $t('sip.startLive')")
+            a-button(size="mini" :type="liveRefresh ? 'primary' : 'outline'" @click="toggleLive")
+              template(#icon)
+                icon-loading(v-if="liveRefresh" spin)
+                icon-refresh(v-else)
+              | {{ liveRefresh ? $t('sip.live') : $t('sip.startLive') }}
+          a-tooltip(mini :content="$t('dashboard.exportCSV')")
+            a-button(size="mini" type="outline" :loading="exportingMessages" @click="exportMessages")
+              template(#icon)
+                icon-download
+      .ladder-content
+        a-spin(:loading="detailLoading")
+          a-empty(v-if="!detailLoading && !selectedCallId" :description="$t('sip.selectFlow')")
+          a-empty(v-else-if="!detailLoading && messages.length === 0" :description="$t('sip.noMessages')")
+          .ladder-diagram(v-else-if="messages.length > 0")
+            .ladder-header
+              .header-time-col
+              .header-endpoints
+                .ladder-endpoint(v-for="ep in endpoints" :key="ep" :class="{ 'ep-active': selectedEndpoint === ep }" @click.stop="selectEndpoint(ep)")
+                  .ep-label {{ ep }}
+                  .ep-node-name(v-if="epNodeMap[ep]") {{ epNodeMap[ep] }}
+                  .ep-vline
+            .ladder-body
+              .message-row(v-for="(msg, idx) in messages" :key="idx" :class="{ selected: selectedMsgIdx === idx }" @click="selectMessage(idx)")
+                .row-time {{ formatMsgTime(msg.timestamp) }}
+                .row-arrow-area
+                  .vline(v-for="ep in endpoints" :key="ep")
+                  .arrow-overlay(:style="arrowOverlayStyle(msg)")
+                    .method-label
+                      span(:style="{ color: msgColor(msg.label) }") {{ msg.label }}
+                    .arrow-shaft
+                      .arrow-body(:class="{ retrans: retransSet.has(idx) }" :style="retransSet.has(idx) ? { borderTopColor: msgColor(msg.label) } : { background: msgColor(msg.label) }")
+                      .arrow-head(:class="arrowDirection(msg)" :style="arrowHeadStyle(msg)")
+      a-modal(v-model:visible="msgDetailVisible" :title="selectedMsg ? selectedMsg.sip_method : ''" :width="700" :footer="false")
+        template(#default)
+          div(v-if="selectedMsg")
+            a-descriptions(:column="2" size="small" style="margin-bottom:12px")
+              a-descriptions-item(:label="$t('sip.from')") {{ selectedMsg.src_ip }}:{{ selectedMsg.src_port }}
+              a-descriptions-item(:label="$t('sip.to')") {{ selectedMsg.dst_ip }}:{{ selectedMsg.dst_port }}
+              a-descriptions-item(:label="$t('common.time')") {{ formatMsgTime(selectedMsg.timestamp) }}
+              a-descriptions-item(:label="$t('sip.size')") {{ selectedMsg.payload_size }} B
+              a-descriptions-item(v-if="selectedMsg.node_name" :label="$t('sip.nodeName')") {{ selectedMsg.node_name }}
+            pre.sip-payload {{ formatPayload(selectedMsg.payload) }}
+      a-modal.ep-modal(v-model:visible="epDrawerVisible" unmount-on-close :title="selectedEndpoint" :width="600" :footer="false")
+        template(#default)
+          a-spin(style="width: 100%" :loading="epLoading")
+            a-empty(v-if="!epLoading && epMessages.length === 0" :description="$t('sip.noMessages')")
+            .ep-msg-list(v-if="epMessages.length > 0")
+              .ep-msg-item(v-for="(msg, i) in epMessages" :key="i" :class="{ active: selectedEpMsg === i }" @click="selectedEpMsg = selectedEpMsg === i ? null : i")
+                .ep-msg-header
+                  span.ep-msg-time {{ formatMsgTime(msg.timestamp) }}
+                  a-tag(size="small" :color="methodColor(msg.label)") {{ msg.label || '-' }}
+                  span.ep-direction(v-if="msg.src_ip")
+                    span(:class="epKey(msg.src_ip, msg.src_port) === selectedEndpoint ? 'dir-out' : 'dir-in'")
+                      | {{ epKey(msg.src_ip, msg.src_port) === selectedEndpoint ? $t('sip.dirOut') : $t('sip.dirIn') }}
+                .ep-msg-peer {{ epKey(msg.src_ip, msg.src_port) === selectedEndpoint ? epKey(msg.dst_ip, msg.dst_port) : epKey(msg.src_ip, msg.src_port) }}
+                pre.ep-payload(v-if="selectedEpMsg === i") {{ formatPayload(msg.payload) }}
   .ctx-menu(v-if="ctxMenu.visible" :style="{ top: ctxMenu.y + 'px', left: ctxMenu.x + 'px' }" @click.stop)
     .ctx-item(@click="exportFlow(ctxMenu.flow); ctxMenu.visible = false")
       icon-download
@@ -644,6 +643,7 @@
   @import '@/assets/style/new.less';
 
   .sip-body {
+    height: calc(100% - 48px);
     overflow: hidden;
   }
 
