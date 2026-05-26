@@ -35,14 +35,17 @@ a-layout.new-layout
             .flow-item(v-for="flow in flows" :key="flow.call_id" :class="{ active: selectedCallId === flow.call_id }" @click="selectFlow(flow)" @contextmenu.prevent="onFlowContextMenu($event, flow)")
               .flow-header
                 span.call-id {{ flow.call_id }}
-                a-tag.status-tag(size="small" :color="methodColor(flow.last_method)") {{ flow.last_method }}
+                .flow-header-actions
+                  a-tooltip(mini :content="$t('sip.copyCallId')")
+                    a-button.copy-btn(type="text" size="mini" @click.stop="copyCallId(flow.call_id)")
+                      template(#icon)
+                        icon-copy
+                  a-tag.status-tag(size="small" :color="methodColor(flow.last_method)") {{ flow.last_method }}
               .flow-footer
                 span.msg-count {{ flow.msg_count }} {{ $t('sip.messages') }}
-                .time-group
-                  span.time {{ formatTime(flow.start_time) }}
-                  a-button.export-btn(type="text" size="mini" @click.stop="exportFlow(flow)")
-                    template(#icon)
-                      icon-download
+                a-button.export-btn(type="text" size="mini" @click.stop="exportFlow(flow)")
+                  template(#icon)
+                    icon-download
     a-layout-content.layout-content
       .ladder-header-bar
         span.ladder-title {{ $t('sip.ladder') }}
@@ -165,7 +168,6 @@ a-layout.new-layout
     node_name: string
     last_method: string
     msg_count: number
-    start_time: string
   }
 
   const flows = ref<SipFlow[]>([])
@@ -183,7 +185,7 @@ a-layout.new-layout
       if (filterPayload.value) parts.push(`AND matches_term(payload, '${filterPayload.value.replace(/'/g, "''")}')`)
       if (methodFilter.value) parts.push(`AND sip_method = '${methodFilter.value}'`)
       const filterWhere = parts.join(' ')
-      const sql = `SELECT call_id, MIN(node_name) AS node_name, MAX(sip_method) AS last_method, COUNT(*) AS msg_count, MIN(greptime_timestamp) AS start_time FROM hep_1 WHERE call_id IS NOT NULL AND call_id != '' ${timeWhere.value} ${filterWhere} GROUP BY call_id ORDER BY start_time DESC LIMIT 200`
+      const sql = `SELECT call_id, MIN(node_name) AS node_name, MAX(sip_method) AS last_method, COUNT(*) AS msg_count FROM hep_1 WHERE call_id IS NOT NULL AND call_id != '' ${timeWhere.value} ${filterWhere} GROUP BY call_id ORDER BY call_id LIMIT 200`
 
       const result: any = await editorAPI.runSQL(sql, db)
       const schema = result.output?.[0]?.records?.schema?.column_schemas || []
@@ -195,7 +197,6 @@ a-layout.new-layout
         node_name: row[colIdx('node_name')] || '',
         last_method: row[colIdx('last_method')],
         msg_count: row[colIdx('msg_count')],
-        start_time: row[colIdx('start_time')],
       }))
     } catch {
       Message.error(t('sip.loadError'))
@@ -616,6 +617,12 @@ a-layout.new-layout
   onMounted(() => document.addEventListener('click', hideCtxMenu))
 
   const { copy } = useClipboard()
+
+  async function copyCallId(callId: string) {
+    await copy(callId)
+    Message.success(t('copied'))
+  }
+
   async function copyPayload() {
     const msg = selectedMsgIdx.value !== null ? messages.value[selectedMsgIdx.value] : null
     if (msg?.payload) {
@@ -948,6 +955,23 @@ a-layout.new-layout
     margin-bottom: 3px;
   }
 
+  .flow-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .copy-btn {
+    opacity: 0;
+    transition: opacity 0.15s;
+    padding: 0 2px;
+  }
+
+  .flow-item:hover .copy-btn {
+    opacity: 1;
+  }
+
   .node-tag {
     max-width: 80px;
     overflow: hidden;
@@ -979,12 +1003,6 @@ a-layout.new-layout
     justify-content: space-between;
     font-size: 11px;
     color: var(--small-font-color);
-
-    .time-group {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-    }
   }
 
   .call-id-badge {

@@ -92,6 +92,7 @@ export default {
   'sqlBuilder.or': 'OR',
   'sqlBuilder.matchesTerm': 'Full-text',
   'sip.searchPlaceholder': 'Search Call-ID / IP',
+  'sip.copyCallId': 'Copy Call-ID',
   'sip.payloadSearch': 'Payload keyword',
   'sip.allMethod': 'All Methods',
   'sip.flows': 'SIP Flows',

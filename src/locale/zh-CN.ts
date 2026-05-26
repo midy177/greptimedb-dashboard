@@ -93,6 +93,7 @@ export default {
   'sqlBuilder.or': '或者',
   'sqlBuilder.matchesTerm': '全文检索',
   'sip.searchPlaceholder': '搜索 Call-ID / IP',
+  'sip.copyCallId': '复制 Call-ID',
   'sip.payloadSearch': 'Payload 关键词',
   'sip.allMethod': '全部方法',
   'sip.flows': 'SIP 流',
