@@ -699,6 +699,7 @@ a-layout.new-layout
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 8px 12px;
 
     > .arco-spin {
@@ -937,6 +938,8 @@ a-layout.new-layout
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.15s;
+    min-width: 0;
+    overflow: hidden;
 
     &:hover {
       background: var(--list-hover-color);
