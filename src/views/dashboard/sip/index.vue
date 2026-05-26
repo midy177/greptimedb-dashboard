@@ -36,10 +36,6 @@ a-layout.new-layout
               .flow-header
                 span.call-id {{ flow.call_id }}
                 a-tag.status-tag(size="small" :color="methodColor(flow.last_method)") {{ flow.last_method }}
-              .flow-meta
-                span.endpoint {{ flow.src_ip }}:{{ flow.src_port }}
-                span.arrow →
-                span.endpoint {{ flow.dst_ip }}:{{ flow.dst_port }}
               .flow-footer
                 span.msg-count {{ flow.msg_count }} {{ $t('sip.messages') }}
                 .time-group
@@ -167,10 +163,6 @@ a-layout.new-layout
   interface SipFlow {
     call_id: string
     node_name: string
-    src_ip: string
-    src_port: string
-    dst_ip: string
-    dst_port: string
     last_method: string
     msg_count: number
     start_time: string
@@ -191,7 +183,7 @@ a-layout.new-layout
       if (filterPayload.value) parts.push(`AND matches_term(payload, '${filterPayload.value.replace(/'/g, "''")}')`)
       if (methodFilter.value) parts.push(`AND sip_method = '${methodFilter.value}'`)
       const filterWhere = parts.join(' ')
-      const sql = `SELECT call_id, MIN(node_name) AS node_name, MIN(src_ip) AS src_ip, MIN(src_port) AS src_port, MIN(dst_ip) AS dst_ip, MIN(dst_port) AS dst_port, MAX(sip_method) AS last_method, COUNT(*) AS msg_count, MIN(greptime_timestamp) AS start_time FROM hep_1 WHERE call_id IS NOT NULL AND call_id != '' ${timeWhere.value} ${filterWhere} GROUP BY call_id ORDER BY start_time DESC LIMIT 200`
+      const sql = `SELECT call_id, MIN(node_name) AS node_name, MAX(sip_method) AS last_method, COUNT(*) AS msg_count, MIN(greptime_timestamp) AS start_time FROM hep_1 WHERE call_id IS NOT NULL AND call_id != '' ${timeWhere.value} ${filterWhere} GROUP BY call_id ORDER BY start_time DESC LIMIT 200`
 
       const result: any = await editorAPI.runSQL(sql, db)
       const schema = result.output?.[0]?.records?.schema?.column_schemas || []
@@ -201,10 +193,6 @@ a-layout.new-layout
       flows.value = rows.map((row: any[]) => ({
         call_id: row[colIdx('call_id')],
         node_name: row[colIdx('node_name')] || '',
-        src_ip: row[colIdx('src_ip')],
-        src_port: row[colIdx('src_port')],
-        dst_ip: row[colIdx('dst_ip')],
-        dst_port: row[colIdx('dst_port')],
         last_method: row[colIdx('last_method')],
         msg_count: row[colIdx('msg_count')],
         start_time: row[colIdx('start_time')],
@@ -983,20 +971,6 @@ a-layout.new-layout
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 190px;
-  }
-
-  .flow-meta {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    color: var(--small-font-color);
-    margin-bottom: 2px;
-  }
-
-  .arrow {
-    color: var(--brand-color);
-    font-weight: bold;
   }
 
   .flow-footer {
