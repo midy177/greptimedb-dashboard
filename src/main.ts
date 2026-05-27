@@ -70,7 +70,10 @@ app.config.warnHandler = (msg) => {
 // intlify warns via console.warn directly, not through Vue's warnHandler
 const _warn = console.warn.bind(console)
 console.warn = (...args: any[]) => {
-  if (typeof args[0] === 'string' && args[0].includes('Not found parent scope')) return
+  if (typeof args[0] === 'string') {
+    if (args[0].includes('Not found parent scope')) return
+    if (args[0].includes("Can't get DOM width or height")) return
+  }
   _warn(...args)
 }
 
