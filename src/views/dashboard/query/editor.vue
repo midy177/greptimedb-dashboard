@@ -435,12 +435,19 @@ a-card.editor-card(style="padding-bottom: 10px" :bordered="false")
     )
   })
 
-  onMounted(async () => {
-    await nextTick()
-    const stored = useStorage('queryCode', { sql: '', promql: '', type: 'sql' }).value
-    codes.value.sql = stored.sql || ''
-    codes.value.promql = stored.promql || ''
-    queryType.value = stored.type || 'sql'
+  onMounted(() => {
+    // Defer write until after CodeMirror has fully initialized its history state
+    setTimeout(() => {
+      try {
+        const raw = localStorage.getItem('queryCode')
+        const stored = raw ? JSON.parse(raw) : { sql: '', promql: '', type: 'sql' }
+        codes.value.sql = stored.sql || ''
+        codes.value.promql = stored.promql || ''
+        queryType.value = stored.type || 'sql'
+      } catch {
+        // ignore malformed storage
+      }
+    }, 0)
   })
 
   // Watch queryType changes and save to localStorage immediately
