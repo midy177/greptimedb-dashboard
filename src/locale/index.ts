@@ -32,6 +32,7 @@ function detectLocale(): string {
 
 const i18n = createI18n({
   legacy: false,
+  globalInjection: true,
   locale: detectLocale(),
   fallbackLocale: 'en-US',
   messages: {
