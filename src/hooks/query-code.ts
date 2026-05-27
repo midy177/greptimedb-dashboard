@@ -45,11 +45,14 @@ export default function useQueryCode() {
     const lastLineCode = state.doc.children
       ? state.doc.children[state.doc.children.length - 1].text[lastChild.text.length - 1]
       : state.doc.text[state.doc.text.length - 1]
+
+    const docLength = sqlView.value.state.doc.length
+    const insertText = `${lastLineCode.trim() === '' ? '' : '\n'}${code}`
     const changes = {
-      from: state.doc.length,
-      insert: `${lastLineCode.trim() === '' ? '' : '\n'}${code}`,
+      from: docLength,
+      insert: insertText,
     }
-    const cursorPosition = state.doc.length + code.length + (lastLineCode.trim() === '' ? 0 : 1) - cursorBack
+    const cursorPosition = docLength + code.length + (lastLineCode.trim() === '' ? 0 : 1) - cursorBack
     sqlView.value.focus()
     sqlView.value.dispatch({
       changes,
