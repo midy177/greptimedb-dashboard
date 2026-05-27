@@ -517,8 +517,8 @@ a-card.editor-card(style="padding-bottom: 10px" :bordered="false")
     },
   ])
 
-  const extensionsForSql = [myKeymap, ...extensions.value.sql]
-  const extensionsForPromql = [myKeymap, ...extensions.value.promql]
+  const extensionsForSql = computed(() => [myKeymap, ...extensions.value.sql])
+  const extensionsForPromql = computed(() => [myKeymap, ...extensions.value.promql])
   const placeholder = `Paste response from explain analyze format json here. Example format:
   {
     "output": [
