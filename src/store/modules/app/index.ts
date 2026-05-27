@@ -32,11 +32,15 @@ const useAppStore = defineStore('app', () => {
   const cfg = configStorage.value
   const ui = uiConfigStorage.value
 
-  // Connection state — initialized from localStorage, falling back to defaults
-  const host = ref(cfg.host ?? defaultSettings.host)
-  const database = ref(cfg.database ?? defaultSettings.database)
-  const username = ref(cfg.username ?? defaultSettings.username)
-  const password = ref(cfg.password ?? defaultSettings.password)
+  // Session credentials (sessionStorage): survive refresh, cleared on tab close
+  const sessionCfgRaw = sessionStorage.getItem('session-credentials')
+  const sessionCfg: Partial<StoredConfig> = sessionCfgRaw ? JSON.parse(sessionCfgRaw) : {}
+
+  // Connection state — initialized from localStorage (or sessionStorage for session-only creds)
+  const host = ref(sessionCfg.host ?? cfg.host ?? defaultSettings.host)
+  const database = ref(sessionCfg.database ?? cfg.database ?? defaultSettings.database)
+  const username = ref(sessionCfg.username ?? cfg.username ?? defaultSettings.username)
+  const password = ref(sessionCfg.password ?? cfg.password ?? defaultSettings.password)
   const authHeader = ref(cfg.authHeader ?? defaultSettings.authHeader)
   const userTimezone = ref(cfg.userTimezone ?? defaultSettings.userTimezone)
   const dbId = ref(cfg.dbId ?? defaultSettings.dbId)
@@ -66,7 +70,7 @@ const useAppStore = defineStore('app', () => {
   const globalSettings = ref(defaultSettings.globalSettings)
   const databaseList = ref<string[]>(defaultSettings.databaseList)
   const guideModalVisible = ref(defaultSettings.guideModalVisible)
-  const sessionCredentials = ref(false) // true when credentials were injected from URL params
+  const sessionCredentials = ref(!!sessionCfgRaw) // true when credentials were injected from URL params
 
   // Actions
   const stateRefs = {
@@ -217,12 +221,17 @@ const useAppStore = defineStore('app', () => {
   }
 
   const setSessionConnectionConfig = (config: Partial<StoredConfig>) => {
-    patchAppState(normalizeConnectionConfig(config))
+    const normalized = normalizeConnectionConfig(config)
+    patchAppState(normalized)
     sessionCredentials.value = true
+    // Write to sessionStorage so credentials survive page refresh but not tab close
+    const existing = JSON.parse(sessionStorage.getItem('session-credentials') || '{}')
+    sessionStorage.setItem('session-credentials', JSON.stringify({ ...existing, ...normalized }))
   }
 
   const clearSessionCredentials = () => {
     sessionCredentials.value = false
+    sessionStorage.removeItem('session-credentials')
     patchAppState({ username: '', password: '' })
   }
 
