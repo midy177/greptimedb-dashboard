@@ -111,11 +111,7 @@ export default defineConfig({
       dts: true,
       dirs: ['src/components', 'src/views/dashboard'],
       extensions: ['vue', 'arco-design'],
-      exclude: [
-        /src\/perses-dashboard\/react\//,
-        /src\/dashboard-main\.tsx/,
-        /src\/views\/dashboard\/logs\/query\/index\.vue/,
-      ],
+      exclude: [/src\/perses-dashboard\/react\//, /src\/dashboard-main\.tsx/, /src\/views\/dashboard\/logs\//],
     }),
   ],
   resolve: {
