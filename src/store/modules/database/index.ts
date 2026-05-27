@@ -1,3 +1,4 @@
+import { oneDark } from '@codemirror/theme-one-dark'
 import { sql } from '@codemirror/lang-sql'
 import { PromQLExtension } from '@prometheus-io/codemirror-promql'
 import { basicSetup } from 'codemirror'
@@ -42,8 +43,8 @@ const useDataBaseStore = defineStore('database', () => {
       },
     })
     return {
-      sql: [basicSetup, sql(sqlHints)],
-      promql: [basicSetup, promql.asExtension()],
+      sql: [basicSetup, sql(sqlHints), oneDark],
+      promql: [basicSetup, promql.asExtension(), oneDark],
     }
   }
 
