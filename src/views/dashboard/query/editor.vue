@@ -278,8 +278,6 @@ a-card.editor-card(style="padding-bottom: 10px" :bordered="false")
 
   const handleReadySql = (payload: any) => {
     sqlView.value = payload.view
-    // Initialize content via dispatch instead of v-model to avoid
-    // history ChangeSet mismatch during CodeMirror's initial setup
     try {
       const raw = localStorage.getItem('queryCode')
       const stored = raw ? JSON.parse(raw) : { sql: '', promql: '', type: 'sql' }
@@ -289,7 +287,6 @@ a-card.editor-card(style="padding-bottom: 10px" :bordered="false")
         sqlView.value.dispatch({
           changes: { from: 0, to: sqlView.value.state.doc.length, insert: initialSql },
         })
-        codes.value.sql = initialSql
       }
       queryType.value = initialType
     } catch {
@@ -307,7 +304,6 @@ a-card.editor-card(style="padding-bottom: 10px" :bordered="false")
         promqlView.value.dispatch({
           changes: { from: 0, to: promqlView.value.state.doc.length, insert: initialPromql },
         })
-        codes.value.promql = initialPromql
       }
     } catch {
       // ignore malformed storage
