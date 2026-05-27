@@ -1,4 +1,3 @@
-import { oneDark } from '@codemirror/theme-one-dark'
 import { sql } from '@codemirror/lang-sql'
 import { PromQLExtension } from '@prometheus-io/codemirror-promql'
 import { basicSetup } from 'codemirror'
@@ -9,7 +8,6 @@ import { ScriptTreeData, TableDetail, TableTreeChild, TableTreeParent } from './
 
 const useDataBaseStore = defineStore('database', () => {
   const { database } = storeToRefs(useAppStore())
-  const { isDark } = storeToRefs(useAppStore())
   const tablesData = ref<RecordsType>()
   const scriptsData = ref()
   const tablesTreeForDatabase = ref({} as { [key: string]: TableTreeParent[] })
@@ -37,7 +35,6 @@ const useDataBaseStore = defineStore('database', () => {
   })
 
   const buildExtensions = (sqlHints: any, promqlHints: Set<string>) => {
-    const theme = isDark.value ? [oneDark] : []
     const promql = new PromQLExtension().setComplete({
       remote: {
         fetchFn: () => Promise.reject(),
@@ -45,14 +42,14 @@ const useDataBaseStore = defineStore('database', () => {
       },
     })
     return {
-      sql: [basicSetup, sql(sqlHints), ...theme],
-      promql: [basicSetup, promql.asExtension(), ...theme],
+      sql: [basicSetup, sql(sqlHints)],
+      promql: [basicSetup, promql.asExtension()],
     }
   }
 
   const extensions = ref(buildExtensions(hints.value.sql, hints.value.promql))
 
-  watch([hints, isDark], () => {
+  watch(hints, () => {
     extensions.value = buildExtensions(hints.value.sql, hints.value.promql)
   })
 
