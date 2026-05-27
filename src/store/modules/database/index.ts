@@ -1,7 +1,6 @@
 import { oneDark } from '@codemirror/theme-one-dark'
 import { sql } from '@codemirror/lang-sql'
 import { PromQLExtension } from '@prometheus-io/codemirror-promql'
-import { basicSetup } from 'codemirror'
 import { SEMANTIC_TYPE_MAP } from '@/views/dashboard/config'
 import editorAPI from '@/api/editor'
 import { RecordsType, SchemaType } from '../code-run/types'
@@ -43,8 +42,8 @@ const useDataBaseStore = defineStore('database', () => {
       },
     })
     return {
-      sql: [basicSetup, sql(sqlHints), oneDark],
-      promql: [basicSetup, promql.asExtension(), oneDark],
+      sql: [sql(sqlHints), oneDark],
+      promql: [promql.asExtension(), oneDark],
     }
   }
 
