@@ -62,6 +62,13 @@ app.config.errorHandler = (err, vm, info) => {
   console.error(err, info)
 }
 
+app.config.warnHandler = (msg) => {
+  // vue-i18n falls back to global scope when components render outside app tree
+  // this is expected behavior with globalInjection: true
+  if (msg.includes('Not found parent scope')) return
+  console.warn(msg)
+}
+
 app.use(ArcoVue, {})
 app.use(ArcoVueIcon)
 
