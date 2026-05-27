@@ -11,12 +11,7 @@ export default mergeConfig(
   {
     base: '',
     mode: 'production',
-    plugins: [
-      configCompressPlugin('gzip'),
-      configVisualizerPlugin(),
-      configArcoResolverPlugin(),
-      configStyleImportPlugin(),
-    ],
+    plugins: [configCompressPlugin(), configVisualizerPlugin(), configArcoResolverPlugin(), configStyleImportPlugin()],
     build: {
       target: process.env.TAURI_PLATFORM === 'windows' ? 'chrome105' : 'safari13',
       minify: !process.env.TAURI_DEBUG ? 'esbuild' : false,
