@@ -1,5 +1,5 @@
 <template lang="pug">
-a-card(v-if="hasChart" :bordered="false")
+a-card.chart-card(v-if="hasChart" :bordered="false")
   template(v-if="hasHeader" #title)
     a-space(size="mini")
       svg.icon-18
@@ -14,7 +14,8 @@ a-card(v-if="hasChart" :bordered="false")
             span.loading-tip {{ $t('dashboard.chartLoadingTip', { count: seriesCount }) }}
           a-button(type="primary" @click="showChart")
             | {{ $t('dashboard.ok') }}
-      Chart(:height="chartHeight" :option="chartOptions" :update-options="updateOptions")
+      .chart-container(ref="chartContainerRef")
+        Chart(:height="chartHeight" :option="chartOptions" :update-options="updateOptions")
     a-row
       a-form.chart-form(layout="inline" :model="chartForm")
         a-form-item(:label="$t('dashboard.chartType')")
@@ -55,6 +56,7 @@ a-card(v-if="hasChart" :bordered="false")
 </template>
 
 <script lang="ts" setup>
+  import { useElementSize } from '@vueuse/core'
   import type { PropType } from 'vue'
   import type { datasetType, ResultType, ChartFormType, SeriesType } from '@/store/modules/code-run/types'
   import useDataChart from '@/hooks/data-chart'
@@ -94,18 +96,22 @@ a-card(v-if="hasChart" :bordered="false")
   const isChartLoading = ref(false)
   const chartOptions = ref({})
   const seriesCount = ref(0)
-  const chartHeight = ref('330px')
-  const chartWidth = ref<number>(596)
+  const chartHeight = ref('400px')
+
+  const chartContainerRef = ref<HTMLElement>()
+  const { width: containerWidth } = useElementSize(chartContainerRef)
 
   const { yOptions, hasChart, groupByOptions, chartForm, xOptions } = useDataChart(props.data)
-  // TODO: To add this props in every select should not be the best option.
-  const triggerProps = {
-    'update-at-scroll': true,
+  const triggerProps = { 'update-at-scroll': true }
+
+  const { formatDateTime } = useDateTimeFormat()
+
+  // Read CSS variable colors so the chart respects the app theme
+  function getCssVar(name: string): string {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
   }
 
   const generateSeries = (name: string, isGroup?: boolean, datasetIndex?: number) => {
-    // TODO: not sure this `isGroup` is the best way
-
     const series: SeriesType = {
       name,
       type: chartForm.chartType,
@@ -115,7 +121,7 @@ a-card(v-if="hasChart" :bordered="false")
         y: name,
         label: [name],
       },
-      symbolSize: 4,
+      symbolSize: 5,
       datasetIndex: 1,
     }
     if (isGroup) {
@@ -130,9 +136,6 @@ a-card(v-if="hasChart" :bordered="false")
     }
     return series
   }
-
-  // Use timezone-aware date formatting
-  const { formatDateTime } = useDateTimeFormat()
 
   const getChartConfig = (yAxisTypes: string[]) => {
     const series: Array<SeriesType> = []
@@ -164,11 +167,7 @@ a-card(v-if="hasChart" :bordered="false")
         return string
       })
       seriesCount.value = dataWithGroup.size
-      if (seriesCount.value > 20) {
-        isChartLoading.value = true
-      } else {
-        isChartLoading.value = false
-      }
+      isChartLoading.value = seriesCount.value > 20
       let datasetIndex = -1
       dataWithGroup.forEach((groupResults: [][], key: string) => {
         legendNames.push(key)
@@ -191,138 +190,127 @@ a-card(v-if="hasChart" :bordered="false")
 
   const makeOptions = () => {
     const { series, legendNames, dataset } = getChartConfig(chartForm.selectedYTypes)
-    const xAxis: any = {
-      axisLine: {
-        lineStyle: {
-          type: 'solid',
-        },
-      },
-      axisLabel: {},
-    }
 
     const dataType = chartForm.xAxisType.data_type
 
+    const axisLabelColor = getCssVar('--small-font-color') || 'rgba(88,82,101,0.9)'
+    const splitLineColor = getCssVar('--light-border-color') || 'rgba(23,12,44,0.08)'
+    const axisLineColor = getCssVar('--border-color') || 'rgba(209,206,213,1)'
+
+    const xAxis: any = {
+      axisLine: { show: true, lineStyle: { color: axisLineColor } },
+      axisTick: { show: false },
+      axisLabel: { color: axisLabelColor, fontSize: 11 },
+      splitLine: { show: false },
+    }
+
     if (dataType !== 'TimestampMillisecond') {
-      xAxis.axisLabel.formatter = (value: number) => {
-        return formatDateTime(value, dataType) ?? String(value)
-      }
+      xAxis.axisLabel.formatter = (value: number) => formatDateTime(value, dataType) ?? String(value)
       xAxis.axisPointer = {
-        label: {
-          formatter: (params: any) => {
-            const { value } = params
-            return formatDateTime(value, dataType) ?? String(value)
-          },
-        },
+        label: { formatter: (p: any) => formatDateTime(p.value, dataType) ?? String(p.value) },
       }
-      xAxis.min = (value: any) => {
-        return value.min
-      }
+      xAxis.min = (value: any) => value.min
     } else {
       xAxis.type = 'time'
-      // Format time axis labels and tooltip for TimestampMillisecond
-      xAxis.axisLabel = {
-        formatter: (value: number) => {
-          return formatDateTime(value, 'TimestampMillisecond') ?? String(value)
-        },
-      }
+      xAxis.axisLabel.formatter = (value: number) => formatDateTime(value, 'TimestampMillisecond') ?? String(value)
       xAxis.axisPointer = {
-        label: {
-          formatter: (params: any) => {
-            const { value } = params
-            return formatDateTime(value, 'TimestampMillisecond') ?? String(value)
-          },
-        },
+        label: { formatter: (p: any) => formatDateTime(p.value, 'TimestampMillisecond') ?? String(p.value) },
       }
     }
 
-    const legendIconHeight = 14
-    const legendIconWidth = 30
-    const legendItemGap = 12
-    const legendTextLineHeight = 15
-    const legendToBottom = 2
-    const gridHeight = 240
-    const legendToGridGap = 24
-    // Legend font size: 12px
-    // monospace font width: 7.23px
-
-    // TODO: better calculation for legend height
-    // legendNames.forEach((name: string) => {
-    //   const width = name.length * 7.23 + legendIconWidth + legendItemGap
-    // })
-
-    const legendsTotalLength =
-      // legend names width
-      legendNames.join('').length * 7.23 +
-      // legend icons width
-      legendIconWidth * legendNames.length +
-      // legend gap
-      legendItemGap * (legendNames.length - 1)
-
-    const legendsRowCount = Math.ceil(legendsTotalLength / chartWidth.value)
-    const legendHight = legendsRowCount * legendTextLineHeight + legendItemGap * (legendsRowCount - 1)
-    const gridToBottom = legendHight + legendToGridGap
-    chartHeight.value = `${gridToBottom + gridHeight}px`
+    // Legend sizing
+    const width = containerWidth.value || 800
+    const legendIconH = 12
+    const legendIconW = 24
+    const legendGap = 10
+    const legendLineH = 16
+    const charW = 6.8
+    const totalLen =
+      legendNames.join('').length * charW + legendIconW * legendNames.length + legendGap * (legendNames.length - 1)
+    const legendRows = Math.max(1, Math.ceil(totalLen / (width - 40)))
+    const legendH = legendRows * legendLineH + (legendRows - 1) * 6
+    const gridBottom = legendH + 52 // space for legend + dataZoom
+    const gridHeight = Math.max(260, Math.min(400, window.innerHeight * 0.38))
+    chartHeight.value = `${gridBottom + gridHeight}px`
 
     return {
       legend: {
         data: legendNames,
-        bottom: legendToBottom,
-        height: legendHight,
-        itemGap: legendItemGap,
-        itemWidth: legendIconWidth,
-        itemHeight: legendIconHeight,
+        bottom: 38,
+        height: legendH,
+        itemGap: legendGap,
+        itemWidth: legendIconW,
+        itemHeight: legendIconH,
         borderWidth: 0,
-        // TODO: legend width, overflow and tooltip
         textStyle: {
-          overflow: 'truncate',
-          fontFamily: 'Google Sans Code',
-          lineHeight: legendTextLineHeight,
+          color: axisLabelColor,
+          fontSize: 12,
+          fontFamily: 'Google Sans Code, monospace',
         },
       },
       grid: {
         containLabel: true,
-        left: 12,
-        right: 12,
-        top: 12,
-        bottom: gridToBottom,
+        left: 8,
+        right: 16,
+        top: 16,
+        bottom: gridBottom,
       },
+      dataZoom: [
+        {
+          type: 'inside',
+          filterMode: 'none',
+        },
+        {
+          type: 'slider',
+          bottom: legendH + 4,
+          height: 24,
+          borderColor: axisLineColor,
+          backgroundColor: 'transparent',
+          dataBackground: {
+            lineStyle: { color: axisLineColor, width: 1 },
+            areaStyle: { color: splitLineColor },
+          },
+          selectedDataBackground: {
+            lineStyle: { color: getCssVar('--brand-color') || '#8322ff', width: 1 },
+            areaStyle: { color: getCssVar('--light-brand-color') || 'rgba(163,118,255,0.15)' },
+          },
+          fillerColor: getCssVar('--light-brand-color') || 'rgba(163,118,255,0.12)',
+          handleStyle: { color: getCssVar('--brand-color') || '#8322ff' },
+          moveHandleStyle: { color: getCssVar('--brand-color') || '#8322ff' },
+          textStyle: { color: axisLabelColor, fontSize: 10 },
+          brushSelect: false,
+        },
+      ],
       tooltip: {
         trigger: 'axis',
         appendToBody: true,
+        backgroundColor: getCssVar('--tooltip-bg-color') || 'rgba(23,12,44,0.92)',
+        borderColor: 'transparent',
+        textStyle: { color: '#fff', fontSize: 12, fontFamily: 'Google Sans Code, monospace' },
         formatter: (params: any) => {
-          if (!params || !Array.isArray(params) || params.length === 0) return ''
-          const param = params[0]
-          const timeValue = param.value[0] || param.axisValue
-
-          // Format time based on data type
+          if (!params?.length) return ''
+          const timeValue = params[0].value[0] ?? params[0].axisValue
           const timeStr = formatDateTime(timeValue, dataType) ?? String(timeValue)
-
-          let content = `<div style="margin-bottom: 8px; font-weight: 600;">${timeStr}</div>`
-
+          let content = `<div style="margin-bottom:6px;font-weight:600;color:rgba(255,255,255,0.85)">${timeStr}</div>`
           params.forEach((p: any) => {
             const value = p.value[1] !== undefined ? p.value[1] : p.value
             if (value === null || value === undefined) return
-
-            content += `
-              <div style="margin: 2px 0;">
-                <span style="display: inline-block; width: 10px; height: 10px; background: ${p.color}; border-radius: 50%; margin-right: 8px;"></span>
-                <span>${p.seriesName}:</span>
-                <span style="float: right; margin-left: 20px;">${value}</span>
-              </div>
-            `
+            content += `<div style="display:flex;align-items:center;gap:6px;margin:3px 0">
+              <span style="width:8px;height:8px;border-radius:50%;background:${p.color};flex-shrink:0"></span>
+              <span style="color:rgba(255,255,255,0.7);flex:1">${p.seriesName}</span>
+              <span style="font-weight:600;margin-left:12px">${value}</span>
+            </div>`
           })
-
           return content
         },
       },
       dataset,
       xAxis,
       yAxis: {
-        axisLine: {
-          lineStyle: {
-            type: 'solid',
-          },
-        },
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { color: axisLabelColor, fontSize: 11 },
+        splitLine: { show: true, lineStyle: { color: splitLineColor, type: 'dashed' } },
         min: 'dataMin',
         max: 'dataMax',
       },
@@ -330,37 +318,12 @@ a-card(v-if="hasChart" :bordered="false")
     }
   }
 
-  // TODO: Might need to change this
-  onMounted(() => {
-    if (hasChart.value) {
-      chartForm.chartType = props.defaultChartForm.chartType || 'line'
-
-      chartForm.selectedYTypes = props.defaultChartForm.selectedYTypes?.length
-        ? props.defaultChartForm.selectedYTypes
-        : [yOptions.value[0]]
-
-      chartForm.xAxisType = props.defaultChartForm.xAxisType?.name
-        ? props.defaultChartForm.xAxisType
-        : xOptions.value[0]
-
-      if (props.defaultChartForm.groupBySelectedTypes?.length) {
-        chartForm.groupBySelectedTypes = props.defaultChartForm.groupBySelectedTypes
-      } else if (groupByOptions.value.length) {
-        chartForm.groupBySelectedTypes = groupByOptions.value.map((item) => item.name)
-      }
-    }
-  })
-
-  const drawChart = () => {
-    const MENU_WIDTH = 242
-    const modalElement = ref<any>()
-    chartWidth.value = 800
-
-    chartOptions.value = makeOptions()
-  }
-
   const showChart = () => {
     isChartLoading.value = false
+  }
+
+  const drawChart = () => {
+    chartOptions.value = makeOptions()
   }
 
   watchEffect(() => {
@@ -372,22 +335,43 @@ a-card(v-if="hasChart" :bordered="false")
     }
   })
 
+  watch(containerWidth, () => {
+    drawChart()
+  })
+
   watch(
     [chartForm, () => props],
     () => {
       drawChart()
     },
-    {
-      deep: true,
-    }
+    { deep: true }
   )
 
-  defineExpose({
-    hasChart,
+  onMounted(() => {
+    if (hasChart.value) {
+      chartForm.chartType = props.defaultChartForm.chartType || 'line'
+      chartForm.selectedYTypes = props.defaultChartForm.selectedYTypes?.length
+        ? props.defaultChartForm.selectedYTypes
+        : [yOptions.value[0]]
+      chartForm.xAxisType = props.defaultChartForm.xAxisType?.name
+        ? props.defaultChartForm.xAxisType
+        : xOptions.value[0]
+      if (props.defaultChartForm.groupBySelectedTypes?.length) {
+        chartForm.groupBySelectedTypes = props.defaultChartForm.groupBySelectedTypes
+      } else if (groupByOptions.value.length) {
+        chartForm.groupBySelectedTypes = groupByOptions.value.map((item) => item.name)
+      }
+    }
   })
+
+  defineExpose({ hasChart })
 </script>
 
 <style scoped lang="less">
+  .chart-container {
+    width: 100%;
+  }
+
   .chart-form {
     margin-top: 12px;
     :deep(.arco-select-view-single) {

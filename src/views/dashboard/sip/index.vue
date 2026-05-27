@@ -43,9 +43,13 @@ a-layout.new-layout
                 span.last-method(:style="{ color: methodColor(flow.last_method) }") {{ flow.last_method }}
                 .footer-right
                   span.msg-count {{ flow.msg_count }} {{ $t('sip.messages') }}
-                  a-button.export-btn(type="text" size="mini" @click.stop="exportFlow(flow)")
-                    template(#icon)
-                      icon-download
+                  a-dropdown(:trigger="['click']")
+                    a-button.export-btn(type="text" size="mini" @click.stop)
+                      template(#icon)
+                        icon-download
+                    template(#content)
+                      a-doption(@click.stop="exportFlow(flow, 'csv')") {{ $t('sip.exportCSV') }}
+                      a-doption(@click.stop="exportFlow(flow, 'pcap')") {{ $t('sip.exportPcap') }}
     a-layout-content.layout-content
       .ladder-header-bar
         span.ladder-title {{ $t('sip.ladder') }}
@@ -58,10 +62,14 @@ a-layout.new-layout
                 icon-loading(v-if="liveRefresh" spin)
                 icon-refresh(v-else)
               | {{ liveRefresh ? $t('sip.live') : $t('sip.startLive') }}
-          a-tooltip(mini :content="$t('dashboard.exportCSV')")
-            a-button(size="mini" type="outline" :loading="exportingMessages" @click="exportMessages")
+          a-dropdown(:trigger="['click']")
+            a-button(size="mini" type="outline" :loading="exportingMessages")
               template(#icon)
                 icon-download
+              | {{ $t('sip.export') }}
+            template(#content)
+              a-doption(@click="exportMessages('csv')") {{ $t('sip.exportCSV') }}
+              a-doption(@click="exportMessages('pcap')") {{ $t('sip.exportPcap') }}
       .ladder-content
         a-spin(:loading="detailLoading")
           a-empty(v-if="!detailLoading && !selectedCallId" :description="$t('sip.selectFlow')")
@@ -76,15 +84,17 @@ a-layout.new-layout
                   .ep-vline
             .ladder-body
               .message-row(v-for="(msg, idx) in messages" :key="idx" :class="{ selected: selectedMsgIdx === idx }" @click="selectMessage(idx)")
-                .row-time {{ formatMsgTime(msg.timestamp) }}
+                .row-time {{ msg._time }}
                 .row-arrow-area
                   .vline(v-for="ep in endpoints" :key="ep")
-                  .arrow-overlay(:style="arrowOverlayStyle(msg)")
+                  .port-tail(:style="msg._portTailStyle") {{ msg._portTail }}
+                  .port-head(:style="msg._portHeadStyle") {{ msg._portHead }}
+                  .arrow-overlay(:style="msg._overlayStyle")
                     .method-label
-                      span(:style="{ color: msgColor(msg.label) }") {{ msg.label }}
+                      span(:style="msg._labelStyle") {{ msg.label }}
                     .arrow-shaft
-                      .arrow-body(:class="{ retrans: retransSet.has(idx) }" :style="retransSet.has(idx) ? { borderTopColor: msgColor(msg.label) } : { background: msgColor(msg.label) }")
-                      .arrow-head(:class="arrowDirection(msg)" :style="arrowHeadStyle(msg)")
+                      .arrow-body(:class="{ retrans: msg._retrans }" :style="msg._retrans ? msg._retransBodyStyle : msg._bodyStyle")
+                      .arrow-head(:class="msg._dir" :style="msg._headStyle")
       a-modal(v-model:visible="msgDetailVisible" :title="selectedMsg ? selectedMsg.sip_method : ''" :width="700" :footer="false")
         template(#default)
           div(v-if="selectedMsg")
@@ -110,9 +120,12 @@ a-layout.new-layout
                 .ep-msg-peer {{ epKey(msg.src_ip, msg.src_port) === selectedEndpoint ? epKey(msg.dst_ip, msg.dst_port) : epKey(msg.src_ip, msg.src_port) }}
                 pre.ep-payload(v-if="selectedEpMsg === i") {{ formatPayload(msg.payload) }}
   .ctx-menu(v-if="ctxMenu.visible" :style="{ top: ctxMenu.y + 'px', left: ctxMenu.x + 'px' }" @click.stop)
-    .ctx-item(@click="exportFlow(ctxMenu.flow); ctxMenu.visible = false")
+    .ctx-item(@click="exportFlow(ctxMenu.flow, 'csv'); ctxMenu.visible = false")
       icon-download
-      span {{ $t('dashboard.exportCSV') }}
+      span {{ $t('sip.exportCSV') }}
+    .ctx-item(@click="exportFlow(ctxMenu.flow, 'pcap'); ctxMenu.visible = false")
+      icon-download
+      span {{ $t('sip.exportPcap') }}
 </template>
 
 <script setup lang="ts" name="SipQuery">
@@ -122,6 +135,7 @@ a-layout.new-layout
   import { Message } from '@arco-design/web-vue'
   import { useI18n } from 'vue-i18n'
   import dayjs from 'dayjs'
+  import { buildPcap } from '@/utils/sip-to-pcap'
   import editorAPI from '@/api/editor'
   import { useAppStore } from '@/store'
 
@@ -216,6 +230,19 @@ a-layout.new-layout
     label: string
     payload: string
     payload_size: number
+    // 预计算渲染字段
+    _time: string
+    _dir: 'right' | 'left'
+    _overlayStyle: Record<string, string>
+    _labelStyle: Record<string, string>
+    _bodyStyle: Record<string, string>
+    _retransBodyStyle: Record<string, string>
+    _headStyle: Record<string, string>
+    _retrans: boolean
+    _portTailStyle: Record<string, string>
+    _portHeadStyle: Record<string, string>
+    _portTail: string
+    _portHead: string
   }
 
   const epKey = (ip: string, port: string) => `${ip}:${port}`
@@ -225,40 +252,102 @@ a-layout.new-layout
     dst: epKey(msg.dst_ip, msg.dst_port) === ep,
   })
 
-  // 每列宽度百分比
-  const EP_COL_PCT = computed(() => (endpoints.value.length > 0 ? 100 / endpoints.value.length : 100))
+  // 将原始行数据转为 SipMessage，并一次性预计算所有渲染字段
+  function processMessages(rawRows: any[][], colIdx: (n: string) => number): SipMessage[] {
+    // stable sort 按时间戳升序，时间戳相同的行保持数据库返回的原始顺序
+    const sorted = rawRows
+      .map((row, i) => ({ row, i }))
+      .sort((a, b) => {
+        const tA = String(a.row[colIdx('timestamp')])
+        const tB = String(b.row[colIdx('timestamp')])
+        if (tA !== tB) return tA < tB ? -1 : 1
+        return a.i - b.i
+      })
+      .map(({ row }) => row)
 
-  function epColCenter(ip: string, port: string): number {
-    const i = endpoints.value.indexOf(epKey(ip, port))
-    if (i < 0) return 0
-    return (i + 0.5) * EP_COL_PCT.value
-  }
+    // 第一遍：收集 endpoints 顺序
+    const epSet = new Set<string>()
+    sorted.forEach((row) => {
+      const src = epKey(row[colIdx('src_ip')], row[colIdx('src_port')])
+      const dst = epKey(row[colIdx('dst_ip')], row[colIdx('dst_port')])
+      if (row[colIdx('src_ip')]) epSet.add(src)
+      if (row[colIdx('dst_ip')]) epSet.add(dst)
+    })
+    const epList = Array.from(epSet)
+    const epCount = epList.length || 1
+    const colPct = 100 / epCount
 
-  function arrowDirection(msg: SipMessage) {
-    const srcIdx = endpoints.value.indexOf(epKey(msg.src_ip, msg.src_port))
-    const dstIdx = endpoints.value.indexOf(epKey(msg.dst_ip, msg.dst_port))
-    return srcIdx <= dstIdx ? 'right' : 'left'
-  }
+    const epIndex = new Map<string, number>()
+    epList.forEach((ep, i) => epIndex.set(ep, i))
 
-  function arrowOverlayStyle(msg: SipMessage) {
-    const srcPct = epColCenter(msg.src_ip, msg.src_port)
-    const dstPct = epColCenter(msg.dst_ip, msg.dst_port)
-    const left = Math.min(srcPct, dstPct)
-    const width = Math.abs(dstPct - srcPct) || 2
-    return { left: `${left}%`, width: `${width}%` }
-  }
+    // 重传检测
+    const seen = new Map<string, string>()
+    const retransIdx = new Set<number>()
+    sorted.forEach((row, i) => {
+      const label = extractLabel(row[colIdx('sip_method')], row[colIdx('payload')])
+      const key = `${row[colIdx('src_ip')]}:${row[colIdx('src_port')]}|${row[colIdx('dst_ip')]}:${
+        row[colIdx('dst_port')]
+      }|${label}`
+      const curTs = String(row[colIdx('timestamp')])
+      const prevTs = seen.get(key)
+      if (prevTs && (Number(curTs) - Number(prevTs)) / 1_000_000_000 < 3) retransIdx.add(i)
+      seen.set(key, curTs)
+    })
 
-  function arrowHeadStyle(msg: SipMessage) {
-    const color = msgColor(msg.label)
-    const dir = arrowDirection(msg)
-    if (dir === 'right') return { borderLeftColor: color }
-    return { borderRightColor: color }
-  }
-  function methodLabelStyle(msg: SipMessage) {
-    const srcPct = epColCenter(msg.src_ip, msg.src_port)
-    const dstPct = epColCenter(msg.dst_ip, msg.dst_port)
-    const center = (srcPct + dstPct) / 2
-    return { left: `${center}%`, transform: 'translateX(-50%)' }
+    // 第二遍：构建带预计算字段的消息
+    return sorted.map((row, i) => {
+      const srcEp = epKey(row[colIdx('src_ip')], row[colIdx('src_port')])
+      const dstEp = epKey(row[colIdx('dst_ip')], row[colIdx('dst_port')])
+      const srcI = epIndex.get(srcEp) ?? 0
+      const dstI = epIndex.get(dstEp) ?? 0
+      const srcPct = (srcI + 0.5) * colPct
+      const dstPct = (dstI + 0.5) * colPct
+      const left = Math.min(srcPct, dstPct)
+      const width = Math.abs(dstPct - srcPct) || 2
+      const dir: 'right' | 'left' = srcI <= dstI ? 'right' : 'left'
+      const label = extractLabel(row[colIdx('sip_method')], row[colIdx('payload')])
+      const color = msgColor(label)
+      const retrans = retransIdx.has(i)
+
+      // 尾端(src)端口显示在竖线外侧（背离箭线），头端(dst)端口显示在竖线外侧（箭头尖端越过竖线后）
+      // dir=right: src在左 → 尾端口锚在竖线，文字向左延伸；dst在右 → 头端口锚在竖线，文字向右延伸
+      // dir=left:  src在右 → 尾端口锚在竖线，文字向右延伸；dst在左 → 头端口锚在竖线，文字向左延伸
+      const tailPct = srcPct
+      const headPct = dstPct
+      const portTailStyle =
+        dir === 'right'
+          ? { left: `${tailPct}%`, transform: 'translateX(calc(-100% - 2px))', textAlign: 'right' }
+          : { left: `${tailPct}%`, transform: 'translateX(2px)', textAlign: 'left' }
+      const portHeadStyle =
+        dir === 'right'
+          ? { left: `${headPct}%`, transform: 'translateX(2px)', textAlign: 'left' }
+          : { left: `${headPct}%`, transform: 'translateX(calc(-100% - 2px))', textAlign: 'right' }
+
+      return {
+        timestamp: row[colIdx('timestamp')],
+        node_name: row[colIdx('node_name')] || '',
+        src_ip: row[colIdx('src_ip')],
+        src_port: row[colIdx('src_port')],
+        dst_ip: row[colIdx('dst_ip')],
+        dst_port: row[colIdx('dst_port')],
+        sip_method: row[colIdx('sip_method')],
+        label,
+        payload: row[colIdx('payload')],
+        payload_size: row[colIdx('payload_size')],
+        _time: formatMsgTime(row[colIdx('timestamp')]),
+        _dir: dir,
+        _overlayStyle: { left: `${left}%`, width: `${width}%` },
+        _labelStyle: { color },
+        _bodyStyle: { background: color },
+        _retransBodyStyle: { borderTopColor: color },
+        _headStyle: dir === 'right' ? { borderLeftColor: color } : { borderRightColor: color },
+        _retrans: retrans,
+        _portTailStyle: { ...portTailStyle, color },
+        _portHeadStyle: { ...portHeadStyle, color },
+        _portTail: row[colIdx('src_port')],
+        _portHead: row[colIdx('dst_port')],
+      }
+    })
   }
 
   const messages = ref<SipMessage[]>([])
@@ -299,24 +388,12 @@ a-layout.new-layout
     try {
       const db = appStore.database || 'public'
       const escapedId = flow.call_id.replace(/'/g, "''")
-      const sql = `SELECT greptime_timestamp AS timestamp, node_name, src_ip, src_port, dst_ip, dst_port, sip_method, payload, payload_size FROM hep_1 WHERE call_id = '${escapedId}' ORDER BY greptime_timestamp ASC LIMIT 500`
+      const sql = `SELECT greptime_timestamp AS timestamp, node_name, src_ip, src_port, dst_ip, dst_port, sip_method, payload, payload_size FROM hep_1 WHERE call_id = '${escapedId}' LIMIT 500`
       const result: any = await editorAPI.runSQL(sql, db)
       const schema = result.output?.[0]?.records?.schema?.column_schemas || []
       const rows = result.output?.[0]?.records?.rows || []
       const colIdx = (name: string) => schema.findIndex((c: any) => c.name === name)
-
-      messages.value = rows.map((row: any[]) => ({
-        timestamp: row[colIdx('timestamp')],
-        node_name: row[colIdx('node_name')] || '',
-        src_ip: row[colIdx('src_ip')],
-        src_port: row[colIdx('src_port')],
-        dst_ip: row[colIdx('dst_ip')],
-        dst_port: row[colIdx('dst_port')],
-        sip_method: row[colIdx('sip_method')],
-        label: extractLabel(row[colIdx('sip_method')], row[colIdx('payload')]),
-        payload: row[colIdx('payload')],
-        payload_size: row[colIdx('payload_size')],
-      }))
+      messages.value = processMessages(rows, colIdx)
     } catch {
       Message.error(t('sip.loadError'))
     } finally {
@@ -358,24 +435,13 @@ a-layout.new-layout
     if (!selectedCallId.value) return
     const db = appStore.database || 'public'
     const escapedId = selectedCallId.value.replace(/'/g, "''")
-    const sql = `SELECT greptime_timestamp AS timestamp, node_name, src_ip, src_port, dst_ip, dst_port, sip_method, payload, payload_size FROM hep_1 WHERE call_id = '${escapedId}' ORDER BY greptime_timestamp ASC LIMIT 500`
+    const sql = `SELECT greptime_timestamp AS timestamp, node_name, src_ip, src_port, dst_ip, dst_port, sip_method, payload, payload_size FROM hep_1 WHERE call_id = '${escapedId}' LIMIT 500`
     try {
       const result: any = await editorAPI.runSQL(sql, db)
       const schema = result.output?.[0]?.records?.schema?.column_schemas || []
       const rows = result.output?.[0]?.records?.rows || []
       const colIdx = (name: string) => schema.findIndex((c: any) => c.name === name)
-      messages.value = rows.map((row: any[]) => ({
-        timestamp: row[colIdx('timestamp')],
-        node_name: row[colIdx('node_name')] || '',
-        src_ip: row[colIdx('src_ip')],
-        src_port: row[colIdx('src_port')],
-        dst_ip: row[colIdx('dst_ip')],
-        dst_port: row[colIdx('dst_port')],
-        sip_method: row[colIdx('sip_method')],
-        label: extractLabel(row[colIdx('sip_method')], row[colIdx('payload')]),
-        payload: row[colIdx('payload')],
-        payload_size: row[colIdx('payload_size')],
-      }))
+      messages.value = processMessages(rows, colIdx)
     } catch {
       // 静默失败
     }
@@ -473,8 +539,12 @@ a-layout.new-layout
 
   function formatMsgTime(ts: string) {
     if (!ts) return '-'
-    const ms = Math.floor(Number(ts) / 1_000_000)
-    return dayjs(ms).format('HH:mm:ss.SSS')
+    const ns = BigInt(ts)
+    const ms = Number(ns / 1_000_000n)
+    const subSec = String(Number(ns % 1_000_000_000n))
+      .padStart(9, '0')
+      .slice(0, 6)
+    return `${dayjs(ms).format('YYYY-MM-DD HH:mm:ss')}.${subSec}`
   }
 
   // 从 payload 第一行解析 SIP 请求行或响应行，提取展示 label
@@ -539,23 +609,6 @@ a-layout.new-layout
     return METHOD_COLORS[label.toUpperCase()] || '#1677ff'
   }
 
-  // 重传检测：同 call_id 内相同 src/dst/method 在 3 秒内再次出现
-  const retransSet = computed(() => {
-    const seen = new Map<string, string>()
-    const retrans = new Set<number>()
-    messages.value.forEach((m, i) => {
-      const key = `${m.src_ip}:${m.src_port}|${m.dst_ip}:${m.dst_port}|${m.label}`
-      const prevTs = seen.get(key)
-      const curTs = String(m.timestamp)
-      if (prevTs) {
-        const diff = (Number(curTs) - Number(prevTs)) / 1_000_000_000
-        if (diff < 3) retrans.add(i)
-      }
-      seen.set(key, curTs)
-    })
-    return retrans
-  })
-
   function methodColor(label: string) {
     return msgColor(label)
   }
@@ -573,29 +626,72 @@ a-layout.new-layout
     }
   }
 
-  async function exportFlow(flow: SipFlow) {
+  async function savePcapWithDialog(data: Uint8Array, defaultName: string) {
     try {
-      const db = appStore.database || 'public'
+      const { saveBinaryFile } = await import('@/utils/save-file')
+      await saveBinaryFile(data, defaultName)
+      Message.success(t('sip.exportSuccess'))
+    } catch (e: any) {
+      if (e?.name !== 'AbortError') Message.error(t('sip.loadError'))
+    }
+  }
+
+  async function exportFlow(flow: SipFlow | null, format: 'csv' | 'pcap' = 'csv') {
+    if (!flow) return
+    try {
       const escapedId = flow.call_id.replace(/'/g, "''")
-      const sql = `SELECT * FROM hep_1 WHERE call_id = '${escapedId}' ORDER BY greptime_timestamp ASC`
       const { default: editorAPIModule } = await import('@/api/editor')
-      const result = await editorAPIModule.runSQLWithCSV(sql)
-      await saveWithDialog(result as unknown as string, `${flow.call_id}.csv`)
+      if (format === 'pcap') {
+        const sql = `SELECT greptime_timestamp AS timestamp, src_ip, src_port, dst_ip, dst_port, payload FROM hep_1 WHERE call_id = '${escapedId}' ORDER BY greptime_timestamp ASC`
+        const result = await editorAPIModule.runSQL(sql)
+        const rows: any[][] = result?.output?.[0]?.records?.rows ?? []
+        const schema: any[] = result?.output?.[0]?.records?.schema?.column_schemas ?? []
+        const ci = (name: string) => schema.findIndex((c: any) => c.name === name)
+        const msgs = rows.map((r) => ({
+          timestamp: String(r[ci('timestamp')]),
+          src_ip: r[ci('src_ip')],
+          src_port: String(r[ci('src_port')]),
+          dst_ip: r[ci('dst_ip')],
+          dst_port: String(r[ci('dst_port')]),
+          payload: r[ci('payload')] || '',
+        }))
+        await savePcapWithDialog(buildPcap(msgs), `${flow.call_id}.pcap`)
+      } else {
+        const sql = `SELECT * FROM hep_1 WHERE call_id = '${escapedId}' ORDER BY greptime_timestamp ASC`
+        const result = await editorAPIModule.runSQLWithCSV(sql)
+        await saveWithDialog(result as unknown as string, `${flow.call_id}.csv`)
+      }
     } catch {
       Message.error(t('sip.loadError'))
     }
   }
 
-  async function exportMessages() {
+  async function exportMessages(format: 'csv' | 'pcap' = 'csv') {
     if (!selectedCallId.value || !messages.value.length) return
     exportingMessages.value = true
     try {
-      const db = appStore.database || 'public'
       const escapedId = selectedCallId.value.replace(/'/g, "''")
-      const sql = `SELECT greptime_timestamp, src_ip, src_port, dst_ip, dst_port, sip_method, payload_size, payload FROM hep_1 WHERE call_id = '${escapedId}' ORDER BY greptime_timestamp ASC`
       const { default: editorAPIModule } = await import('@/api/editor')
-      const result = await editorAPIModule.runSQLWithCSV(sql)
-      await saveWithDialog(result as unknown as string, `${selectedCallId.value}.csv`)
+      if (format === 'pcap') {
+        const sql = `SELECT greptime_timestamp AS timestamp, src_ip, src_port, dst_ip, dst_port, payload FROM hep_1 WHERE call_id = '${escapedId}' ORDER BY greptime_timestamp ASC`
+        const result = await editorAPIModule.runSQL(sql)
+        const rows: any[][] = result?.output?.[0]?.records?.rows ?? []
+        const schema: any[] = result?.output?.[0]?.records?.schema?.column_schemas ?? []
+        const ci = (name: string) => schema.findIndex((c: any) => c.name === name)
+        const msgs = rows.map((r) => ({
+          timestamp: String(r[ci('timestamp')]),
+          src_ip: r[ci('src_ip')],
+          src_port: String(r[ci('src_port')]),
+          dst_ip: r[ci('dst_ip')],
+          dst_port: String(r[ci('dst_port')]),
+          payload: r[ci('payload')] || '',
+        }))
+        await savePcapWithDialog(buildPcap(msgs), `${selectedCallId.value}.pcap`)
+      } else {
+        const sql = `SELECT greptime_timestamp, src_ip, src_port, dst_ip, dst_port, sip_method, payload_size, payload FROM hep_1 WHERE call_id = '${escapedId}' ORDER BY greptime_timestamp ASC`
+        const result = await editorAPIModule.runSQLWithCSV(sql)
+        await saveWithDialog(result as unknown as string, `${selectedCallId.value}.csv`)
+      }
     } catch {
       Message.error(t('sip.loadError'))
     } finally {
@@ -753,7 +849,7 @@ a-layout.new-layout
   }
 
   .header-time-col {
-    width: 90px;
+    width: 185px;
     flex-shrink: 0;
   }
 
@@ -833,7 +929,7 @@ a-layout.new-layout
   .row-time {
     font-size: 11px;
     color: var(--small-font-color);
-    width: 90px;
+    width: 185px;
     flex-shrink: 0;
     font-family: monospace;
     padding-left: 2px;
@@ -926,6 +1022,21 @@ a-layout.new-layout
         flex-direction: row-reverse;
       }
     }
+  }
+
+  .port-tail,
+  .port-head {
+    position: absolute;
+    top: 50%;
+    transform-origin: left center;
+    font-size: 10px;
+    font-family: monospace;
+    white-space: nowrap;
+    line-height: 1;
+    opacity: 0.9;
+    pointer-events: none;
+    // vertically center on the arrow line (arrow is at bottom of overlay, ~5px above row center)
+    margin-top: 6px;
   }
 
   .flow-list {

@@ -41,8 +41,8 @@ a-drawer.settings-drawer(
           icon-delete
 
   a-form(layout="vertical" :model="settingsForm")
-    a-form-item(:label="$t('settings.host')")
-      a-input(v-model="settingsForm.host")
+    a-form-item(:label="$t('settings.host')" :label-attrs="{ for: 'settings-host' }")
+      a-input(v-model="settingsForm.host" :input-attrs="{ id: 'settings-host', name: 'host' }")
     a-form-item
       template(#label)
         .label-with-button
@@ -68,10 +68,17 @@ a-drawer.settings-drawer(
           :value="item"
           :label="item"
         )
-    a-form-item(:label="$t('settings.username')")
-      a-input(v-model="settingsForm.username")
-    a-form-item(:label="$t('settings.password')")
-      a-input-password(v-model="settingsForm.password" autocomplete="off")
+    a-form-item(:label="$t('settings.username')" :label-attrs="{ for: 'settings-username' }")
+      a-input(
+        v-model="settingsForm.username"
+        :input-attrs="{ id: 'settings-username', name: 'username', autocomplete: 'username' }"
+      )
+    a-form-item(:label="$t('settings.password')" :label-attrs="{ for: 'settings-password' }")
+      a-input-password(
+        v-model="settingsForm.password"
+        autocomplete="off"
+        :input-attrs="{ id: 'settings-password', name: 'password' }"
+      )
     a-form-item(v-if="settingsForm.username || settingsForm.password")
       template(#label)
         a-space(:size="4")
@@ -142,6 +149,7 @@ a-modal(
     v-model="newProfileName"
     allow-clear
     :placeholder="$t('settings.profileNamePlaceholder')"
+    :input-attrs="{ name: 'profile-name' }"
     @keyup.enter="onAddProfile"
   )
 </template>

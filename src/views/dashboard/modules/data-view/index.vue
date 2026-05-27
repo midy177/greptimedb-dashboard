@@ -89,6 +89,8 @@ a-tabs.panel-tabs(
   import { useCodeRunStore } from '@/store'
   import type { ResultType } from '@/store/modules/code-run/types'
   import ExplainTabs from '@/components/explain-tabs/index.vue'
+  import DataGrid from './components/data-grid.vue'
+  import DataChart from './components/data-chart.vue'
 
   const props = defineProps<{
     results: ResultType[]
