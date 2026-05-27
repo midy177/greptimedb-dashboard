@@ -1,4 +1,5 @@
 import { EditorSelection } from '@codemirror/state'
+import { useRouter } from 'vue-router'
 import { useCodeRunStore } from '@/store'
 import { ResultType, PromForm } from '@/store/modules/code-run/types'
 import { TableTreeParent } from '@/store/modules/database/types'
@@ -36,6 +37,16 @@ export default function useQueryCode() {
   const { results } = storeToRefs(useCodeRunStore())
   const inputFromNewLineToQueryCode = (code: string, cursorBack: number) => {
     queryType.value = 'sql'
+
+    // Editor not mounted — write to codes directly and navigate to query page
+    if (!sqlView.value) {
+      const sep = codes.value.sql.trim() === '' ? '' : '\n'
+      codes.value.sql = codes.value.sql + sep + code
+      const router = useRouter()
+      router.push({ name: 'query' })
+      return
+    }
+
     const { state } = sqlView.value
 
     let lastChild

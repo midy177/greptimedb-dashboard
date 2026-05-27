@@ -435,7 +435,8 @@ a-card.editor-card(style="padding-bottom: 10px" :bordered="false")
     )
   })
 
-  onMounted(() => {
+  onMounted(async () => {
+    await nextTick()
     const stored = useStorage('queryCode', { sql: '', promql: '', type: 'sql' }).value
     codes.value.sql = stored.sql || ''
     codes.value.promql = stored.promql || ''
