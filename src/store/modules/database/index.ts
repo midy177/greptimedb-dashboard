@@ -9,6 +9,7 @@ import { ScriptTreeData, TableDetail, TableTreeChild, TableTreeParent } from './
 
 const useDataBaseStore = defineStore('database', () => {
   const { database } = storeToRefs(useAppStore())
+  const { isDark } = storeToRefs(useAppStore())
   const tablesData = ref<RecordsType>()
   const scriptsData = ref()
   const tablesTreeForDatabase = ref({} as { [key: string]: TableTreeParent[] })
@@ -35,25 +36,24 @@ const useDataBaseStore = defineStore('database', () => {
     return { sql: { schema }, promql: initialMetricList }
   })
 
-  const extensions = ref<{
-    sql: any[]
-    promql: any[]
-  }>({
-    sql: [basicSetup, sql(hints.value.sql), oneDark],
-    promql: [basicSetup, new PromQLExtension().asExtension(), oneDark],
-  })
-
-  watch(hints, () => {
-    extensions.value.sql = [basicSetup, sql(hints.value.sql), oneDark]
+  const buildExtensions = (sqlHints: any, promqlHints: Set<string>) => {
+    const theme = isDark.value ? [oneDark] : []
     const promql = new PromQLExtension().setComplete({
       remote: {
         fetchFn: () => Promise.reject(),
-        cache: {
-          initialMetricList: [...hints.value.promql],
-        },
+        cache: { initialMetricList: [...promqlHints] },
       },
     })
-    extensions.value.promql = [basicSetup, promql.asExtension(), oneDark]
+    return {
+      sql: [basicSetup, sql(sqlHints), ...theme],
+      promql: [basicSetup, promql.asExtension(), ...theme],
+    }
+  }
+
+  const extensions = ref(buildExtensions(hints.value.sql, hints.value.promql))
+
+  watch([hints, isDark], () => {
+    extensions.value = buildExtensions(hints.value.sql, hints.value.promql)
   })
 
   const getIndexesForColumns = (columnSchemas: SchemaType[]) => {
