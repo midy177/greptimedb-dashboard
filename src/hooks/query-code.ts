@@ -1,5 +1,5 @@
 import { EditorSelection } from '@codemirror/state'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useCodeRunStore } from '@/store'
 import { ResultType, PromForm } from '@/store/modules/code-run/types'
 import { TableTreeParent } from '@/store/modules/database/types'
@@ -70,6 +70,13 @@ export default function useQueryCode() {
       selection: EditorSelection.create([EditorSelection.cursor(cursorPosition)]),
       scrollIntoView: true,
     })
+
+    // Navigate to query page if not already there
+    const route = useRoute()
+    if (route.name !== 'query') {
+      const router = useRouter()
+      router.push({ name: 'query' })
+    }
   }
 
   // Parse SQL command to extract operation details
