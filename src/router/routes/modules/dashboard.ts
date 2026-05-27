@@ -140,7 +140,7 @@ const DASHBOARD: AppRouteRecordRaw = {
     {
       path: 'log-query',
       redirect: '/dashboard/logs-query',
-      component: () => import('@/views/dashboard/logs/query/index.vue'),
+      component: () => import('@/views/dashboard/logs/query/LogsQuery.vue'),
       meta: {
         ignoreCache: true,
         locale: 'menu.dashboard.logsQuery',
@@ -152,7 +152,7 @@ const DASHBOARD: AppRouteRecordRaw = {
     },
     {
       path: 'logs-query',
-      component: () => import('@/views/dashboard/logs/query/index.vue'),
+      component: () => import('@/views/dashboard/logs/query/LogsQuery.vue'),
       name: 'log-query',
       meta: {
         ignoreCache: true,
