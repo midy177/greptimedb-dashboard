@@ -22,6 +22,11 @@ export default mergeConfig(
       minify: !process.env.TAURI_DEBUG ? 'esbuild' : false,
       sourcemap: !!process.env.TAURI_DEBUG,
       rollupOptions: {
+        onwarn(warning, warn) {
+          // suppress #__PURE__ annotation position warnings from mathjs
+          if (warning.code === 'INVALID_ANNOTATION') return
+          warn(warning)
+        },
         output: {
           manualChunks: {
             arco: ['@arco-design/web-vue'],
@@ -47,7 +52,7 @@ export default mergeConfig(
           }),
         ],
       },
-      chunkSizeWarningLimit: 2000,
+      chunkSizeWarningLimit: 4000,
     },
   },
   baseConfig
