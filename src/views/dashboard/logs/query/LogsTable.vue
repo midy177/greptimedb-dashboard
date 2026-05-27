@@ -35,6 +35,7 @@
   import { ref, computed, watch, shallowRef } from 'vue'
   import { useElementSize, useLocalStorage } from '@vueuse/core'
   import type { ColumnType, TSColumn } from '@/types/query'
+  import DataTable from '@/components/data-table/index.vue'
   import LogDetail from './LogDetail.vue'
 
   interface TableData {
