@@ -23,7 +23,7 @@ const router = createRouter({
       redirect: '/dashboard/logs-query',
     },
     // Quick-connect: /#/connect?host=...&username=...&password=...&database=...
-    // Credentials apply to the current session only and are cleared on navigation away.
+    // Credentials are session-only and cleared when the page is closed.
     {
       path: '/connect',
       redirect: (to) => ({ path: '/dashboard/logs-query', query: to.query }),
@@ -40,20 +40,16 @@ const router = createRouter({
 
 createRouteGuard(router)
 
-// Track whether credentials were injected from URL params
-let credentialsInjected = false
-
 router.beforeEach((to, _from, next) => {
   const { host, username, password, database } = to.query as Record<string, string>
   if (host || username || password) {
     const appStore = useAppStore()
-    appStore.setConnectionConfig({
+    appStore.setSessionConnectionConfig({
       ...(host && { host }),
       ...(username !== undefined && { username }),
       ...(password !== undefined && { password }),
       ...(database && { database }),
     })
-    credentialsInjected = true
 
     // Strip credentials from URL to avoid leaking in history
     const cleanQuery = { ...to.query }
@@ -65,14 +61,6 @@ router.beforeEach((to, _from, next) => {
     return
   }
   next()
-})
-
-router.afterEach((to, from) => {
-  if (credentialsInjected && from.path !== to.path) {
-    credentialsInjected = false
-    const appStore = useAppStore()
-    appStore.setConnectionConfig({ username: '', password: '' })
-  }
 })
 
 export default router

@@ -66,6 +66,7 @@ const useAppStore = defineStore('app', () => {
   const globalSettings = ref(defaultSettings.globalSettings)
   const databaseList = ref<string[]>(defaultSettings.databaseList)
   const guideModalVisible = ref(defaultSettings.guideModalVisible)
+  const sessionCredentials = ref(false) // true when credentials were injected from URL params
 
   // Actions
   const stateRefs = {
@@ -215,6 +216,16 @@ const useAppStore = defineStore('app', () => {
     patchAppState(normalizeConnectionConfig(config))
   }
 
+  const setSessionConnectionConfig = (config: Partial<StoredConfig>) => {
+    patchAppState(normalizeConnectionConfig(config))
+    sessionCredentials.value = true
+  }
+
+  const clearSessionCredentials = () => {
+    sessionCredentials.value = false
+    patchAppState({ username: '', password: '' })
+  }
+
   const applyUiConfig = (config: Partial<UiConfig>, options: { persist?: boolean } = { persist: true }) => {
     const normalized = normalizeUiConfig(config)
     patchAppState(normalized)
@@ -348,6 +359,9 @@ const useAppStore = defineStore('app', () => {
     switchProfile,
     saveProfile,
     setConnectionConfig,
+    setSessionConnectionConfig,
+    sessionCredentials,
+    clearSessionCredentials,
   }
 })
 
