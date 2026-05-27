@@ -55,26 +55,9 @@ if (isTauri) {
 
 const app: App = createApp(Apps)
 
-app.config.errorHandler = (err, vm, info) => {
-  // Suppress known vue-codemirror + keep-alive concurrency issue
-  // where history ChangeSet lengths mismatch during reactive batch updates
-  if (err instanceof Error && err.message === 'Mismatched change set lengths') return
-  console.error(err, info)
-}
-
 app.config.warnHandler = (msg) => {
   if (msg.includes('Not found parent scope')) return
   console.warn(msg)
-}
-
-// intlify warns via console.warn directly, not through Vue's warnHandler
-const _warn = console.warn.bind(console)
-console.warn = (...args: any[]) => {
-  if (typeof args[0] === 'string') {
-    if (args[0].includes('Not found parent scope')) return
-    if (args[0].includes("Can't get DOM width or height")) return
-  }
-  _warn(...args)
 }
 
 app.use(ArcoVue, {})

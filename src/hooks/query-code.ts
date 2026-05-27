@@ -35,6 +35,8 @@ const codes = ref({
 
 export default function useQueryCode() {
   const { results } = storeToRefs(useCodeRunStore())
+  const router = useRouter()
+  const route = useRoute()
   const inputFromNewLineToQueryCode = (code: string, cursorBack: number) => {
     queryType.value = 'sql'
 
@@ -42,7 +44,6 @@ export default function useQueryCode() {
     if (!sqlView.value) {
       const sep = codes.value.sql.trim() === '' ? '' : '\n'
       codes.value.sql = codes.value.sql + sep + code
-      const router = useRouter()
       router.push({ name: 'query' })
       return
     }
@@ -72,9 +73,7 @@ export default function useQueryCode() {
     })
 
     // Navigate to query page if not already there
-    const route = useRoute()
     if (route.name !== 'query') {
-      const router = useRouter()
       router.push({ name: 'query' })
     }
   }
