@@ -347,6 +347,7 @@ const useAppStore = defineStore('app', () => {
     deleteProfile,
     switchProfile,
     saveProfile,
+    setConnectionConfig,
   }
 })
 
