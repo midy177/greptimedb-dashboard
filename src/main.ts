@@ -63,10 +63,15 @@ app.config.errorHandler = (err, vm, info) => {
 }
 
 app.config.warnHandler = (msg) => {
-  // vue-i18n falls back to global scope when components render outside app tree
-  // this is expected behavior with globalInjection: true
   if (msg.includes('Not found parent scope')) return
   console.warn(msg)
+}
+
+// intlify warns via console.warn directly, not through Vue's warnHandler
+const _warn = console.warn.bind(console)
+console.warn = (...args: any[]) => {
+  if (typeof args[0] === 'string' && args[0].includes('Not found parent scope')) return
+  _warn(...args)
 }
 
 app.use(ArcoVue, {})
