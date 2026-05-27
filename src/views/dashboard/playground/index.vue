@@ -27,7 +27,7 @@ a-layout.layout
 
   const refreshPlaygroundModal = ref()
   const currentFile = ref('')
-  const officialMdFiles = ref(import.meta.glob('./docs/*.md', { as: 'raw', eager: true }))
+  const officialMdFiles = ref(import.meta.glob('./docs/*.md', { query: '?raw', eager: true, import: 'default' }))
   const gistFiles = ref({})
   const fileList = ref({} as any)
 
