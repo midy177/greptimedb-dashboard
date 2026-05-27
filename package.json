@@ -1,7 +1,7 @@
 {
   "name": "greptime_dashboard",
   "description": "dashboard for GreptimeDB",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "author": "Greptime",
   "license": "Apache-2.0",

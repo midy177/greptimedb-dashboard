@@ -115,9 +115,9 @@ a-layout.new-layout
                   span.ep-msg-time {{ formatMsgTime(msg.timestamp) }}
                   a-tag(size="small" :color="methodColor(msg.label)") {{ msg.label || '-' }}
                   span.ep-direction(v-if="msg.src_ip")
-                    span(:class="epKey(msg.src_ip, msg.src_port) === selectedEndpoint ? 'dir-out' : 'dir-in'")
-                      | {{ epKey(msg.src_ip, msg.src_port) === selectedEndpoint ? $t('sip.dirOut') : $t('sip.dirIn') }}
-                .ep-msg-peer {{ epKey(msg.src_ip, msg.src_port) === selectedEndpoint ? epKey(msg.dst_ip, msg.dst_port) : epKey(msg.src_ip, msg.src_port) }}
+                    span(:class="msg.src_ip === selectedEndpoint ? 'dir-out' : 'dir-in'")
+                      | {{ msg.src_ip === selectedEndpoint ? $t('sip.dirOut') : $t('sip.dirIn') }}
+                .ep-msg-peer {{ msg.src_ip === selectedEndpoint ? epKey(msg.dst_ip, msg.dst_port) : epKey(msg.src_ip, msg.src_port) }}
                 pre.ep-payload(v-if="selectedEpMsg === i") {{ formatPayload(msg.payload) }}
   .ctx-menu(v-if="ctxMenu.visible" :style="{ top: ctxMenu.y + 'px', left: ctxMenu.x + 'px' }" @click.stop)
     .ctx-item(@click="exportFlow(ctxMenu.flow, 'csv'); ctxMenu.visible = false")
@@ -265,20 +265,18 @@ a-layout.new-layout
       })
       .map(({ row }) => row)
 
-    // 第一遍：收集 endpoints 顺序
-    const epSet = new Set<string>()
+    // 第一遍：收集 IP 列顺序（同 IP 不同端口归同一列）
+    const ipSet = new Set<string>()
     sorted.forEach((row) => {
-      const src = epKey(row[colIdx('src_ip')], row[colIdx('src_port')])
-      const dst = epKey(row[colIdx('dst_ip')], row[colIdx('dst_port')])
-      if (row[colIdx('src_ip')]) epSet.add(src)
-      if (row[colIdx('dst_ip')]) epSet.add(dst)
+      if (row[colIdx('src_ip')]) ipSet.add(row[colIdx('src_ip')])
+      if (row[colIdx('dst_ip')]) ipSet.add(row[colIdx('dst_ip')])
     })
-    const epList = Array.from(epSet)
-    const epCount = epList.length || 1
-    const colPct = 100 / epCount
+    const ipList = Array.from(ipSet)
+    const ipCount = ipList.length || 1
+    const colPct = 100 / ipCount
 
-    const epIndex = new Map<string, number>()
-    epList.forEach((ep, i) => epIndex.set(ep, i))
+    const ipIndex = new Map<string, number>()
+    ipList.forEach((ip, i) => ipIndex.set(ip, i))
 
     // 重传检测
     const seen = new Map<string, string>()
@@ -296,10 +294,8 @@ a-layout.new-layout
 
     // 第二遍：构建带预计算字段的消息
     return sorted.map((row, i) => {
-      const srcEp = epKey(row[colIdx('src_ip')], row[colIdx('src_port')])
-      const dstEp = epKey(row[colIdx('dst_ip')], row[colIdx('dst_port')])
-      const srcI = epIndex.get(srcEp) ?? 0
-      const dstI = epIndex.get(dstEp) ?? 0
+      const srcI = ipIndex.get(row[colIdx('src_ip')]) ?? 0
+      const dstI = ipIndex.get(row[colIdx('dst_ip')]) ?? 0
       const srcPct = (srcI + 0.5) * colPct
       const dstPct = (dstI + 0.5) * colPct
       const left = Math.min(srcPct, dstPct)
@@ -359,8 +355,8 @@ a-layout.new-layout
   const endpoints = computed(() => {
     const set = new Set<string>()
     messages.value.forEach((m) => {
-      if (m.src_ip) set.add(epKey(m.src_ip, m.src_port))
-      if (m.dst_ip) set.add(epKey(m.dst_ip, m.dst_port))
+      if (m.src_ip) set.add(m.src_ip)
+      if (m.dst_ip) set.add(m.dst_ip)
     })
     return Array.from(set)
   })
@@ -368,8 +364,8 @@ a-layout.new-layout
   const epNodeMap = computed(() => {
     const map: Record<string, string> = {}
     messages.value.forEach((m) => {
-      if (m.node_name && m.src_ip && !map[epKey(m.src_ip, m.src_port)]) {
-        map[epKey(m.src_ip, m.src_port)] = m.node_name
+      if (m.node_name && m.src_ip && !map[m.src_ip]) {
+        map[m.src_ip] = m.node_name
       }
     })
     return map
@@ -480,9 +476,7 @@ a-layout.new-layout
     epMessages.value = []
 
     // 直接从已加载的 messages 里过滤，无需再查数据库
-    const filtered = messages.value.filter(
-      (m) => epKey(m.src_ip, m.src_port) === ep || epKey(m.dst_ip, m.dst_port) === ep
-    )
+    const filtered = messages.value.filter((m) => m.src_ip === ep || m.dst_ip === ep)
 
     if (filtered.length > 0) {
       epMessages.value = filtered
@@ -494,13 +488,9 @@ a-layout.new-layout
     epLoading.value = true
     try {
       const db = appStore.database || 'public'
-      const lastColon = ep.lastIndexOf(':')
-      const ip = lastColon > 0 ? ep.slice(0, lastColon) : ep
-      const port = lastColon > 0 ? ep.slice(lastColon + 1) : ''
-      const escapedIp = ip.replace(/'/g, "''")
-      const escapedPort = port.replace(/'/g, "''")
+      const escapedIp = ep.replace(/'/g, "''")
       const escapedCallId = selectedCallId.value.replace(/'/g, "''")
-      const sql = `SELECT greptime_timestamp AS timestamp, src_ip, src_port, dst_ip, dst_port, sip_method, payload, payload_size FROM hep_1 WHERE call_id = '${escapedCallId}' AND ((src_ip = '${escapedIp}' AND src_port = '${escapedPort}') OR (dst_ip = '${escapedIp}' AND dst_port = '${escapedPort}')) ORDER BY greptime_timestamp ASC LIMIT 500`
+      const sql = `SELECT greptime_timestamp AS timestamp, src_ip, src_port, dst_ip, dst_port, sip_method, payload, payload_size FROM hep_1 WHERE call_id = '${escapedCallId}' AND (src_ip = '${escapedIp}' OR dst_ip = '${escapedIp}') ORDER BY greptime_timestamp ASC LIMIT 500`
       const result: any = await editorAPI.runSQL(sql, db)
       const schema = result.output?.[0]?.records?.schema?.column_schemas || []
       const rows = result.output?.[0]?.records?.rows || []
