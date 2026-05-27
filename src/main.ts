@@ -56,6 +56,9 @@ if (isTauri) {
 const app: App = createApp(Apps)
 
 app.config.errorHandler = (err, vm, info) => {
+  // Suppress known vue-codemirror + keep-alive concurrency issue
+  // where history ChangeSet lengths mismatch during reactive batch updates
+  if (err instanceof Error && err.message === 'Mismatched change set lengths') return
   console.error(err, info)
 }
 
