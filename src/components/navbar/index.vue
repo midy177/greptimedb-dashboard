@@ -20,7 +20,7 @@ a-layout.navbar
               use(:href="`#${item.meta.icon}`") 
   a-layout-footer
     ul.footer
-      li
+      li(v-if="!sessionCredentials")
         a-tooltip(:content="$t('settings.title')")
           a-button(type="text" :class="{ hover: globalSettings }" @click="setVisible")
             template(#icon)
@@ -39,7 +39,7 @@ NewsModal(ref="newsModal" :news-list="newsListMutable" :loading="isLoadingNews")
   const router = useRouter()
   const { t } = useI18n()
   const appStore = useAppStore()
-  const { menuSelectedKey, globalSettings, hideSidebar } = storeToRefs(appStore)
+  const { menuSelectedKey, globalSettings, hideSidebar, sessionCredentials } = storeToRefs(appStore)
   const { activeTab: ingestTab } = storeToRefs(useIngestStore())
   const { menuTree } = useMenuTree()
   const { newsList, isLoadingNews } = useNews()
