@@ -1,6 +1,7 @@
 import { App, createApp } from 'vue'
 import ArcoVue from '@arco-design/web-vue'
 import ArcoVueIcon from '@arco-design/web-vue/es/icon'
+import { install as installVueCodemirror } from 'vue-codemirror'
 import globalComponents from '@/components'
 import { initializeNews } from '@/hooks/news'
 import '@/assets/icons'
@@ -64,6 +65,8 @@ app.config.errorHandler = (err, vm, info) => {
 
 app.use(ArcoVue, {})
 app.use(ArcoVueIcon)
+// Override default extensions to empty so components supply their own via :extensions prop
+app.use(installVueCodemirror, { extensions: [] })
 
 app.use(store)
 app.use(router)
