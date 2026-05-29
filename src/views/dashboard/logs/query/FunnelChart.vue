@@ -1,17 +1,9 @@
 <template lang="pug">
-VCharts(
-  ref="chart"
-  style="width: 100%; height: 120px"
-  :option="chartOptions"
-  :autoresize="true"
-)
+VCharts(style="width: 100%; height: 120px" :option="chartOptions" :autoresize="true")
 </template>
 
 <script setup name="LogCountChart" lang="ts">
   import VCharts from 'vue-echarts'
-  import { useI18n } from 'vue-i18n'
-  import * as echarts from 'echarts'
-  import { watchOnce } from '@vueuse/core'
   import editorAPI from '@/api/editor'
   import type { QueryState } from '@/types/query'
   import { replaceTimePlaceholders, getTableRefForSql } from '@/utils/sql'
@@ -27,8 +19,6 @@ VCharts(
   })
 
   const data = shallowRef([])
-  const { t } = useI18n()
-  const chart = ref()
   const chartOptions = computed(() => ({
     grid: {
       left: '55px',
@@ -93,10 +83,7 @@ VCharts(
       return
     }
     editorAPI.runSQL(chartSql.value).then((result) => {
-      const {
-        rows: countRows,
-        schema: { column_schemas: columnSchemas },
-      } = result.output[0].records
+      const { rows: countRows } = result.output[0].records
       data.value = countRows
     })
   }

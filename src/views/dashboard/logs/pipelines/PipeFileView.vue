@@ -261,8 +261,10 @@ transform:
     content: defaultContentExamples[selectedContentType.value],
   })
 
-  const handleInputChange = (type: string) => {
-    debugForm.content = defaultContentExamples[type]
+  const handleInputChange = (
+    type: string | number | boolean | Record<string, any> | (string | number | boolean | Record<string, any>)[]
+  ) => {
+    debugForm.content = defaultContentExamples[type as string]
   }
 
   // Watch for content changes to auto-detect content type

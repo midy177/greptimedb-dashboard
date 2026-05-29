@@ -37,7 +37,7 @@ a-modal(
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, computed, defineExpose } from 'vue'
+  import { ref, reactive } from 'vue'
   import { Notification } from '@arco-design/web-vue'
   import LangEditor from '@/components/lang-editor.vue'
   import editorAPI from '@/api/editor'

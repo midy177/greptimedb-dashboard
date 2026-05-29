@@ -248,9 +248,7 @@ const useAppStore = defineStore('app', () => {
     const inferredHost = tauriEnv
       ? 'http://localhost:4000'
       : (() => {
-          const { origin, pathname } = window.location
-          const index = pathname.lastIndexOf('/dashboard')
-          return index !== -1 ? `${origin}${pathname.slice(0, index)}` : `${origin}${pathname}`
+          return window.location.origin
         })()
 
     saveConnectionConfig({ host: inferredHost })
@@ -261,6 +259,7 @@ const useAppStore = defineStore('app', () => {
   }
 
   const openGlobalSettings = () => {
+    if (sessionCredentials.value) return
     globalSettings.value = true
   }
 

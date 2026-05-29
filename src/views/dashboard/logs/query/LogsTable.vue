@@ -17,7 +17,7 @@
     @filter-condition-add="handleFilterConditionAdd"
     @row-select="$emit('rowSelect', $event)"
   )
-    // Custom slot for timestamp column 
+    // Custom slot for timestamp column
     template(v-if="tsColumn" #[`column-${tsColumn.name}`]="{ record, renderedValue, rowIndex }")
       .clickable-ts(@click="() => handleTsClick(record, rowIndex)") {{ renderedValue }}
 

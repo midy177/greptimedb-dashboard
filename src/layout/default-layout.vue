@@ -15,7 +15,6 @@ a-layout
   import PageLayout from './page-layout.vue'
 
   useResponsive(true)
-  const navbarHeight = `52px`
 
   const { navbar, footer } = storeToRefs(useAppStore())
 </script>

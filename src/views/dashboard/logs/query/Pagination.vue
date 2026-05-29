@@ -27,10 +27,9 @@ a-space(v-if="pages.length")
 </template>
 
 <script setup name="Pagination" lang="ts">
-  import { ref, nextTick } from 'vue'
+  import { ref } from 'vue'
   import dayjs from 'dayjs'
   import editorAPI from '@/api/editor'
-  import type { SchemaType } from '@/store/modules/code-run/types'
   import type { QueryState, ColumnType } from '@/types/query'
   import { convertTimestampToMilliseconds } from '@/utils/date-time'
   import { replaceTimePlaceholders } from '@/utils/sql'

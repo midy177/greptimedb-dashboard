@@ -15,10 +15,10 @@
       template(#title)
         .results-header
           span {{ $t('logsQuery.results') }}
-          span.results-count(v-if="totalResults > 0") 
+          span.results-count(v-if="totalResults > 0")
             | ({{ totalResults }} {{ totalResults === 1 ? 'record' : 'records' }})
       template(#extra)
-        a-button(size="small" type="primary" @click="showCreate") 
+        a-button(size="small" type="primary" @click="showCreate")
           template(#icon)
             icon-plus
           | New Flow
@@ -155,7 +155,7 @@
     modalVisible.value = true
   }
 
-  function showEdit(record) {
+  function showEdit(record: Record<string, unknown>) {
     isEdit.value = true
     editData.value = record
     modalVisible.value = true

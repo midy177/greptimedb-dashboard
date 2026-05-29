@@ -106,7 +106,7 @@ export const sqlFormatter = (code: string) => {
   try {
     const trimmed = code.trim()
     const isInsert = /^INSERT\s+INTO/i.test(trimmed)
-    let formatted
+    let formatted: string
 
     try {
       formatted = sqlFormat(trimmed, {

@@ -1,4 +1,7 @@
-export const WHITE_LIST = [{ name: 'notFound', children: [] }]
+export const WHITE_LIST = [
+  { name: 'notFound', children: [] },
+  { name: 'tokenGenerator', children: [] },
+]
 
 export const NOT_FOUND = {
   name: 'notFound',

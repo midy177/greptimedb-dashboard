@@ -34,5 +34,7 @@ BaseInput(:config="config")
 
   const config = getInfluxdbInputConfig(precision)
 
-  const doc = Object.entries(import.meta.glob('../doc.md', { query: '?raw', eager: true, import: 'default' }))[0][1]
+  const doc = Object.entries(
+    import.meta.glob('../doc.md', { query: '?raw', eager: true, import: 'default' })
+  )[0][1] as string
 </script>

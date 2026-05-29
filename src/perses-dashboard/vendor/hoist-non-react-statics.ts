@@ -81,7 +81,7 @@ export default function hoistNonReactStatics(
     const targetStatics = getStatics(targetComponent)
     const sourceStatics = getStatics(sourceComponent)
 
-    for (let i = 0; i < keys.length; ++i) {
+    for (let i = 0; i < keys.length; i += 1) {
       const key = keys[i] as string
       if (
         !KNOWN_STATICS[key] &&

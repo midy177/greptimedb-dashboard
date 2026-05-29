@@ -93,7 +93,7 @@ a-drawer.custom-drawer(
             :placeholder="defaultFlowDefinitionPlaceholder"
           )
 
-    // Text editor mode  
+    // Text editor mode
     template(v-else)
       .editable-fields-section
         a-form(layout="vertical" :model="textEditorData")
@@ -114,7 +114,7 @@ a-drawer.custom-drawer(
           type="primary"
           :loading="loading"
           @click="editorMode === 'form' ? handleSubmit() : handleTextSubmit()"
-        ) 
+        )
           | {{ isEdit ? 'Update' : 'Create' }} Flow
 
   // Create Table Modal
@@ -429,11 +429,6 @@ GROUP BY time_window;`
   // Cancel handler
   const handleCancel = () => {
     visible.value = false
-  }
-
-  function renderTs(timestamp: number, dataType: string) {
-    const ms = convertTimestampToMilliseconds(timestamp, dataType)
-    return dayjs(ms).format('YYYY-MM-DD HH:mm:ss.SSS')
   }
 </script>
 

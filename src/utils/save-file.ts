@@ -41,7 +41,7 @@ export async function saveBinaryFile(data: Uint8Array, defaultName: string): Pro
     }
   }
   const { default: fileDownload } = await import('js-file-download')
-  fileDownload(new Blob([data]), defaultName)
+  fileDownload(new Blob([data.buffer as ArrayBuffer]), defaultName)
   return true
 }
 

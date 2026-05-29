@@ -35,11 +35,11 @@ a-card(:bordered="false")
 </template>
 
 <script setup name="ChartContainer" lang="ts">
-  import { ref, computed, watch, nextTick } from 'vue'
+  import { ref, computed, nextTick } from 'vue'
   import { useLocalStorage } from '@vueuse/core'
   import { useI18n } from 'vue-i18n'
   import { IconDown, IconRight } from '@arco-design/web-vue/es/icon'
-  import type { ColumnType, TSColumn, QueryState } from '@/types/query'
+  import type { ColumnType, QueryState } from '@/types/query'
   import CountChart from '@/components/count-chart/index.vue'
   import FunnelChart from './FunnelChart.vue'
 

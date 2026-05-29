@@ -10,10 +10,10 @@ import { createTheme, ThemeProvider } from '@mui/material/styles'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { QueryParamProvider } from 'use-query-params'
 import { ReactRouter6Adapter } from 'use-query-params/adapters/react-router-6'
+import { ensureTraceTableLinks } from '../traceLink'
 import HelperDashboardView from './DashboardView'
 import { useWorkbenchContext } from './WorkbenchProvider'
 import { DASHBOARD_TOKENS, globalStyles } from './Dashboard.styles'
-import { ensureTraceTableLinks } from '../traceLink'
 
 interface DashboardProps {
   dashboardEditable?: boolean

@@ -15,7 +15,7 @@ a-layout-content.main-content
     action="/"
     :auto-upload="false"
     :multiple="false"
-    :file-list="file ? [{ name: file.name, size: file.size }] : []"
+    :file-list="file ? [{ name: file.name }] : []"
     :show-file-list="false"
     @before-upload="beforeUpload"
   )
@@ -159,7 +159,7 @@ a-layout-content.main-content
     sizeError.value = false
   }
 
-  const beforeUpload = (newFile) => {
+  const beforeUpload = (newFile: File) => {
     file.value = newFile
     sizeError.value = false
 
