@@ -104,7 +104,12 @@ a-layout.new-layout
               a-descriptions-item(:label="$t('common.time')") {{ formatMsgTime(selectedMsg.timestamp) }}
               a-descriptions-item(:label="$t('sip.size')") {{ selectedMsg.payload_size }} B
               a-descriptions-item(v-if="selectedMsg.node_name" :label="$t('sip.nodeName')") {{ selectedMsg.node_name }}
-            pre.sip-payload {{ formatPayload(selectedMsg.payload) }}
+            .sip-payload-wrap
+              pre.sip-payload {{ formatPayload(selectedMsg.payload) }}
+              a-tooltip(mini :content="$t('copied')" trigger="click")
+                a-button.payload-copy-btn(type="text" size="mini" @click="copyPayload")
+                  template(#icon)
+                    icon-copy
       a-modal.ep-modal(v-model:visible="epDrawerVisible" unmount-on-close :title="selectedEndpoint" :width="600" :footer="false")
         template(#default)
           a-spin(style="width: 100%" :loading="epLoading")
@@ -118,7 +123,12 @@ a-layout.new-layout
                     span(:class="msg.src_ip === selectedEndpoint ? 'dir-out' : 'dir-in'")
                       | {{ msg.src_ip === selectedEndpoint ? $t('sip.dirOut') : $t('sip.dirIn') }}
                 .ep-msg-peer {{ msg.src_ip === selectedEndpoint ? epKey(msg.dst_ip, msg.dst_port) : epKey(msg.src_ip, msg.src_port) }}
-                pre.ep-payload(v-if="selectedEpMsg === i") {{ formatPayload(msg.payload) }}
+                .ep-payload-wrap(v-if="selectedEpMsg === i")
+                  pre.ep-payload {{ formatPayload(msg.payload) }}
+                  a-tooltip(mini :content="$t('copied')" trigger="click")
+                    a-button.payload-copy-btn(type="text" size="mini" @click.stop="copy(msg.payload).then(() => Message.success(t('copied')))")
+                      template(#icon)
+                        icon-copy
   .ctx-menu(v-if="ctxMenu.visible" :style="{ top: ctxMenu.y + 'px', left: ctxMenu.x + 'px' }" @click.stop)
     .ctx-item(@click="exportFlow(ctxMenu.flow, 'csv'); ctxMenu.visible = false")
       icon-download
@@ -1136,6 +1146,22 @@ a-layout.new-layout
     white-space: nowrap;
   }
 
+  .sip-payload-wrap {
+    position: relative;
+    &:hover .payload-copy-btn {
+      opacity: 1;
+    }
+  }
+
+  .payload-copy-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    background: var(--code-bg, #f5f5f5);
+  }
+
   .sip-payload {
     font-family: 'Fira Mono', 'Consolas', monospace;
     font-size: 12px;
@@ -1207,6 +1233,13 @@ a-layout.new-layout
   .dir-in {
     color: rgb(var(--success-6));
     font-weight: 600;
+  }
+
+  .ep-payload-wrap {
+    position: relative;
+    &:hover .payload-copy-btn {
+      opacity: 1;
+    }
   }
 
   .ep-payload {
