@@ -53,7 +53,12 @@ a-layout.new-layout
     a-layout-content.layout-content
       .ladder-header-bar
         span.ladder-title {{ $t('sip.ladder') }}
-        span.call-id-badge(v-if="selectedCallId") {{ selectedCallId }}
+        .call-id-badge-wrap(v-if="selectedCallId")
+          span.call-id-badge {{ selectedCallId }}
+          a-tooltip(mini :content="$t('copied')" trigger="click")
+            a-button.call-id-copy-btn(type="text" size="mini" @click="copyCallId(selectedCallId)")
+              template(#icon)
+                icon-copy
         template(v-if="selectedCallId")
           a-divider(direction="vertical")
           a-tooltip(mini :content="liveRefresh ? $t('sip.stopLive') : $t('sip.startLive')")
@@ -1135,6 +1140,22 @@ a-layout.new-layout
     display: flex;
     align-items: center;
     gap: 4px;
+  }
+
+  .call-id-badge-wrap {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    &:hover .call-id-copy-btn {
+      opacity: 1;
+    }
+  }
+
+  .call-id-copy-btn {
+    opacity: 0;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
   }
 
   .call-id-badge {
