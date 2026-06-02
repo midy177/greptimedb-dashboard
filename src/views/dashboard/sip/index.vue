@@ -21,6 +21,8 @@ a-layout.new-layout
         icon-loading(v-if="flowsLoading" spin)
         icon-play-arrow(v-else)
       | {{ $t('dashboard.run') }}
+    a-tooltip(mini :content="$t('sip.flowsLimit')")
+      a-input-number(v-model="flowsLimit" :min="10" :max="5000" :step="100" size="small" style="width:80px" @change="loadFlows")
     a-checkbox(size="small" :model-value="flowsLive" @update:modelValue="toggleFlowsLive")
       span(style="color: var(--color-text-2)") {{ $t('logsQuery.live') }}
   a-layout.sip-body
@@ -146,7 +148,7 @@ a-layout.new-layout
 <script setup lang="ts" name="SipQuery">
   /* eslint-disable no-use-before-define */
   import { ref, computed, onMounted, onUnmounted } from 'vue'
-  import { useClipboard } from '@vueuse/core'
+  import { useClipboard, useStorage } from '@vueuse/core'
   import { Message } from '@arco-design/web-vue'
   import { useI18n } from 'vue-i18n'
   import dayjs from 'dayjs'
@@ -175,6 +177,7 @@ a-layout.new-layout
   const filterDstIp = ref('')
   const filterPayload = ref('')
   const methodFilter = ref<string | undefined>('')
+  const flowsLimit = useStorage('sip-flows-limit', 200)
 
   // 候选值缓存
   const fieldOptions = ref<Record<string, string[]>>({ call_id: [], src_ip: [], dst_ip: [] })
@@ -214,7 +217,7 @@ a-layout.new-layout
       if (filterPayload.value) parts.push(`AND matches_term(payload, '${filterPayload.value.replace(/'/g, "''")}')`)
       if (methodFilter.value) parts.push(`AND sip_method = '${methodFilter.value}'`)
       const filterWhere = parts.join(' ')
-      const sql = `SELECT call_id, MIN(node_name) AS node_name, MAX(sip_method) AS last_method, COUNT(*) AS msg_count FROM hep_1 WHERE call_id IS NOT NULL AND call_id != '' ${timeWhere.value} ${filterWhere} GROUP BY call_id ORDER BY call_id LIMIT 200`
+      const sql = `SELECT call_id, MIN(node_name) AS node_name, MAX(sip_method) AS last_method, COUNT(*) AS msg_count FROM hep_1 WHERE call_id IS NOT NULL AND call_id != '' ${timeWhere.value} ${filterWhere} GROUP BY call_id ORDER BY call_id LIMIT ${flowsLimit.value}`
 
       const result: any = await editorAPI.runSQL(sql, db)
       const schema = result.output?.[0]?.records?.schema?.column_schemas || []

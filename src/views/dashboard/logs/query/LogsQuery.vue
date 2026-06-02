@@ -44,8 +44,8 @@
           ref="sqlBuilderRef"
           storage-key="logs-query-table"
           preferred-database="public"
-          preferred-table="logs"
-          :exact-match-fields="['service_name', 'container_name', 'log_type']"
+          preferred-table="k8s_logs"
+          :exact-match-fields="['workload_name', 'pod_name', 'container_name', 'log_type']"
           :form-state="builderFormState"
           :default-form-state="defaultFormState"
         )
@@ -153,7 +153,8 @@
     defaultFormState: {
       conditions: [
         { field: 'log_type', operator: '=', value: '', relation: 'AND', fieldType: 'String' },
-        { field: 'service_name', operator: '=', value: '', relation: 'AND', fieldType: 'String' },
+        { field: 'workload_name', operator: '=', value: '', relation: 'AND', fieldType: 'String' },
+        { field: 'pod_name', operator: '=', value: '', relation: 'AND', fieldType: 'String' },
         { field: 'container_name', operator: '=', value: '', relation: 'AND', fieldType: 'String' },
       ],
     },

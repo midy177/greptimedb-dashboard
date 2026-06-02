@@ -115,6 +115,7 @@ export default defineConfig({
     }),
   ],
   resolve: {
+    dedupe: ['vue'],
     alias: [
       {
         find: '@',

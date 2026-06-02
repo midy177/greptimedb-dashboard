@@ -117,6 +117,7 @@ export default {
   'sip.exportCSV': 'Export CSV',
   'sip.exportPcap': 'Export PCAP',
   'sip.export': 'Export',
+  'sip.flowsLimit': 'Flows limit',
   'footer.queryMode': 'Query Mode',
   'footer.fullMode': 'Full Mode',
   'footer.switchFull': 'Switch to Full Mode',
