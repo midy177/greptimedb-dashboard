@@ -119,6 +119,7 @@ export default {
   'sip.exportPcap': '导出 PCAP',
   'sip.export': '导出',
   'sip.flowsLimit': '流条数',
+  'sip.traceIdSearch': 'Trace-ID',
   'footer.queryMode': '查询模式',
   'footer.fullMode': '全功能模式',
   'footer.switchFull': '切换到全功能模式',

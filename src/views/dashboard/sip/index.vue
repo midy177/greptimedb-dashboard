@@ -8,6 +8,7 @@ a-layout.new-layout
     a-auto-complete(v-model="filterCallId" style="width: 140px" allow-clear placeholder="Call-ID" :data="fieldOptions.call_id" filter-option @focus="fetchFieldOptions('call_id')" @change="loadFlows" @clear="loadFlows")
     a-auto-complete(v-model="filterSrcIp" style="width:140px" allow-clear placeholder="src_ip" :data="fieldOptions.src_ip" filter-option @focus="fetchFieldOptions('src_ip')" @change="loadFlows" @clear="loadFlows")
     a-auto-complete(v-model="filterDstIp" style="width:140px" allow-clear placeholder="dst_ip" :data="fieldOptions.dst_ip" filter-option @focus="fetchFieldOptions('dst_ip')" @change="loadFlows" @clear="loadFlows")
+    a-auto-complete(v-model="filterTraceId" style="width:160px" allow-clear :placeholder="$t('sip.traceIdSearch')" :data="fieldOptions.trace_id" filter-option @focus="fetchFieldOptions('trace_id')" @change="loadFlows" @clear="loadFlows")
     a-input(v-model="filterPayload" style="width:160px" allow-clear :placeholder="$t('sip.payloadSearch')" @press-enter="loadFlows" @clear="loadFlows")
     a-select(v-model="methodFilter" style="width:130px" allow-clear :placeholder="$t('sip.allMethod')" @change="loadFlows")
       a-option(value="INVITE") INVITE
@@ -175,18 +176,19 @@ a-layout.new-layout
   const filterCallId = ref('')
   const filterSrcIp = ref('')
   const filterDstIp = ref('')
+  const filterTraceId = ref('')
   const filterPayload = ref('')
   const methodFilter = ref<string | undefined>('')
   const flowsLimit = useStorage('sip-flows-limit', 200)
 
   // 候选值缓存
-  const fieldOptions = ref<Record<string, string[]>>({ call_id: [], src_ip: [], dst_ip: [] })
+  const fieldOptions = ref<Record<string, string[]>>({ call_id: [], src_ip: [], dst_ip: [], trace_id: [] })
 
   async function fetchFieldOptions(field: string) {
     if (fieldOptions.value[field]?.length) return
     try {
       const db = appStore.database || 'public'
-      const sql = `SELECT DISTINCT TRIM("${field}") AS val FROM hep_1 WHERE "${field}" IS NOT NULL AND TRIM("${field}") != '' AND greptime_timestamp >= NOW() - INTERVAL '30 minutes' ORDER BY val LIMIT 200`
+      const sql = `SELECT DISTINCT TRIM("${field}") AS val FROM hep_1 WHERE "${field}" IS NOT NULL AND TRIM("${field}") != '' AND greptime_timestamp >= NOW() - INTERVAL '5 minutes' ORDER BY val LIMIT 200`
       const result: any = await editorAPI.runSQL(sql, db)
       const rows = result.output?.[0]?.records?.rows || []
       fieldOptions.value[field] = [...new Set<string>(rows.map((r: any[]) => r[0] as string).filter(Boolean))]
@@ -214,6 +216,7 @@ a-layout.new-layout
       if (filterCallId.value) parts.push(`AND call_id = '${filterCallId.value.replace(/'/g, "''")}'`)
       if (filterSrcIp.value) parts.push(`AND src_ip = '${filterSrcIp.value.replace(/'/g, "''")}'`)
       if (filterDstIp.value) parts.push(`AND dst_ip = '${filterDstIp.value.replace(/'/g, "''")}'`)
+      if (filterTraceId.value) parts.push(`AND matches_term(trace_id, '${filterTraceId.value.replace(/'/g, "''")}')`)
       if (filterPayload.value) parts.push(`AND matches_term(payload, '${filterPayload.value.replace(/'/g, "''")}')`)
       if (methodFilter.value) parts.push(`AND sip_method = '${methodFilter.value}'`)
       const filterWhere = parts.join(' ')

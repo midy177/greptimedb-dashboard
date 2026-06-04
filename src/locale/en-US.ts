@@ -118,6 +118,7 @@ export default {
   'sip.exportPcap': 'Export PCAP',
   'sip.export': 'Export',
   'sip.flowsLimit': 'Flows limit',
+  'sip.traceIdSearch': 'Trace-ID',
   'footer.queryMode': 'Query Mode',
   'footer.fullMode': 'Full Mode',
   'footer.switchFull': 'Switch to Full Mode',
