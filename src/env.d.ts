@@ -10,3 +10,9 @@ interface ImportMetaEnv {
   readonly VITE_API_BASE_URL: string
   readonly VITE_CLOUD_URL: string
 }
+
+declare module '*.svg?component' {
+  import type { FunctionalComponent, SVGAttributes } from 'vue'
+  const src: FunctionalComponent<SVGAttributes>
+  export default src
+}

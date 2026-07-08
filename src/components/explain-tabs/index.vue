@@ -98,7 +98,7 @@ a-tabs.explain-tabs(lazy-load :animation="true")
   const exportJson = () => {
     try {
       const jsonData = JSON.stringify(reconstructExplainJson(props.data), null, 2)
-      fileDownload(jsonData, 'explain-analyze-greptimedb.json', 'application/json')
+      fileDownload(jsonData, 'explain-analyze-novoone.json', 'application/json')
       Message.success('JSON downloaded successfully')
     } catch (e) {
       Message.error(`Failed to export JSON: ${e instanceof Error ? e.message : String(e)}`)

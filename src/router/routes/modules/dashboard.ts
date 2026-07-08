@@ -6,7 +6,7 @@ const DASHBOARD: AppRouteRecordRaw = {
   path: '/dashboard',
   name: 'dashboard',
 
-  redirect: '/dashboard/logs-query',
+  redirect: '/dashboard/sip',
   component: DEFAULT_LAYOUT,
   meta: {
     locale: 'menu.dashboard',
@@ -61,6 +61,7 @@ const DASHBOARD: AppRouteRecordRaw = {
         requiresAuth: false,
         icon: 'ingest',
         roles: ['admin', 'cloud'],
+        hideInMenu: true,
       },
       children: [
         {
@@ -138,19 +139,6 @@ const DASHBOARD: AppRouteRecordRaw = {
       ],
     },
     {
-      path: 'log-query',
-      redirect: '/dashboard/logs-query',
-      component: () => import('@/views/dashboard/logs/query/LogsQuery.vue'),
-      meta: {
-        ignoreCache: true,
-        locale: 'menu.dashboard.logsQuery',
-        requiresAuth: false,
-        icon: 'log',
-        roles: ['admin', 'cloud'],
-        hideInMenu: true,
-      },
-    },
-    {
       path: 'logs-query',
       component: () => import('@/views/dashboard/logs/query/LogsQuery.vue'),
       name: 'log-query',
@@ -167,11 +155,11 @@ const DASHBOARD: AppRouteRecordRaw = {
       redirect: '/dashboard/logs-pipelines',
       component: () => import('@/views/dashboard/logs/pipelines/index.vue'),
       meta: {
+        hideInMenu: true,
         locale: 'menu.dashboard.logPipeline',
         requiresAuth: false,
         roles: ['admin', 'cloud'],
         icon: 'configuration',
-        hideInMenu: true,
       },
     },
     {
@@ -179,6 +167,7 @@ const DASHBOARD: AppRouteRecordRaw = {
       name: 'log-pipeline',
       component: () => import('@/views/dashboard/logs/pipelines/index.vue'),
       meta: {
+        hideInMenu: true,
         locale: 'menu.dashboard.logPipeline',
         requiresAuth: false,
         roles: ['admin', 'cloud'],
@@ -226,6 +215,7 @@ const DASHBOARD: AppRouteRecordRaw = {
       component: () => import('@/views/dashboard/flow/index.vue'),
       name: 'flow',
       meta: {
+        hideInMenu: true,
         locale: 'menu.dashboard.flow',
         requiresAuth: false,
         icon: 'streaming',
@@ -237,6 +227,7 @@ const DASHBOARD: AppRouteRecordRaw = {
       component: () => import('@/views/dashboard/perses/index.vue'),
       name: 'perses',
       meta: {
+        hideInMenu: true,
         locale: 'menu.dashboard.perses',
         requiresAuth: false,
         icon: 'visualization',
@@ -248,6 +239,7 @@ const DASHBOARD: AppRouteRecordRaw = {
       name: 'status',
       component: () => import('@/views/dashboard/status/index.vue'),
       meta: {
+        hideInMenu: true,
         locale: 'menu.dashboard.status',
         requiresAuth: true,
         icon: 'database-config',

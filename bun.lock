@@ -6,7 +6,7 @@
       "name": "greptime_dashboard",
       "dependencies": {
         "@arco-design/web-vue": "^2.58.0",
-        "@babel/core": "^7.29.0",
+        "@babel/core": "^7.29.7",
         "@codemirror/autocomplete": "6.9.0",
         "@codemirror/lang-java": "6.0.1",
         "@codemirror/lang-json": "6.0.1",
@@ -46,7 +46,7 @@
         "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
         "@tauri-apps/plugin-dialog": "2.7.1",
         "@tauri-apps/plugin-fs": "2.5.1",
-        "@tauri-apps/plugin-global-shortcut": "~2.3.1",
+        "@tauri-apps/plugin-global-shortcut": "~2.3.2",
         "@tauri-apps/plugin-process": "2.3.1",
         "@tauri-apps/plugin-updater": "2.5.1",
         "@types/d3": "^7.4.3",
@@ -61,7 +61,7 @@
         "consola": "^3.4.2",
         "d3": "^7.9.0",
         "d3-flextree": "^2.1.2",
-        "dayjs": "^1.11.20",
+        "dayjs": "^1.11.21",
         "driver.js": "^1.4.0",
         "echarts": "^5.6.0",
         "eslint-plugin": "^1.0.1",
@@ -83,7 +83,7 @@
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-is": "^18.3.1",
-        "react-router-dom": "^6.30.3",
+        "react-router-dom": "^6.30.4",
         "sortablejs": "^1.15.7",
         "sql-formatter": "^12.2.4",
         "stylelint-config-rational-order-fix": "^0.1.9",
@@ -92,7 +92,7 @@
         "stylelint-stylus": "^0.18.0",
         "ts-md5": "^1.3.1",
         "use-query-params": "^2.2.2",
-        "vue": "^3.5.34",
+        "vue": "^3.5.35",
         "vue-codemirror": "^6.1.1",
         "vue-echarts": "^6.7.3",
         "vue-i18n": "^9.14.5",
@@ -100,10 +100,11 @@
       },
       "devDependencies": {
         "@arco-plugins/vite-vue": "^1.4.6",
-        "@babel/types": "^7.29.0",
+        "@babel/types": "^7.29.7",
         "@commitlint/cli": "^17.8.1",
         "@commitlint/config-conventional": "^17.8.1",
         "@prettier/plugin-pug": "^2.5.2",
+        "@resvg/resvg-js": "^2.6.2",
         "@tauri-apps/cli": "2.11.2",
         "@types/lodash": "^4.17.24",
         "@types/markdown-it": "^12.2.3",
@@ -112,12 +113,12 @@
         "@types/nprogress": "^0.2.3",
         "@types/numeral": "^2.0.5",
         "@types/qs": "^6.15.1",
-        "@types/react": "^18.3.29",
+        "@types/react": "^18.3.30",
         "@types/react-dom": "^18.3.7",
         "@types/sortablejs": "^1.15.9",
-        "@typescript-eslint/eslint-plugin": "^8.59.4",
-        "@typescript-eslint/parser": "^8.59.4",
-        "@vitejs/plugin-react": "4",
+        "@typescript-eslint/eslint-plugin": "^8.60.1",
+        "@typescript-eslint/parser": "^8.60.1",
+        "@vitejs/plugin-react": "^4.7.0",
         "@vitejs/plugin-vue": "^3.2.0",
         "@vitejs/plugin-vue-jsx": "^2.1.1",
         "@vue/babel-plugin-jsx": "^1.5.0",
@@ -147,14 +148,14 @@
         "typescript": "^5.9.3",
         "unplugin-auto-import": "^0.16.7",
         "unplugin-vue-components": "^0.25.2",
-        "vite": "7",
+        "vite": "^7.3.5",
         "vite-plugin-compression": "^0.5.1",
         "vite-plugin-eslint": "^1.8.1",
         "vite-plugin-html": "^3.2.2",
         "vite-plugin-markdown": "2.2.0-2",
         "vite-plugin-style-import": "2.0.0",
         "vite-svg-loader": "^4.0.0",
-        "vitest": "^4.1.7",
+        "vitest": "^4.1.8",
         "vue-tsc": "^1.8.27",
       },
     },
@@ -598,6 +599,32 @@
     "@replit/codemirror-lang-solidity": ["@replit/codemirror-lang-solidity@6.0.2", "", { "dependencies": { "@lezer/highlight": "1.2.0" }, "peerDependencies": { "@codemirror/language": "6.9.0" } }, "sha512-/dpTVH338KFV6SaDYYSadkB4bI/0B0QRF/bkt1XS3t3QtyR49mn6+2k0OUQhvt2ZSO7kt10J+OPilRAtgbmX0w=="],
 
     "@replit/codemirror-lang-svelte": ["@replit/codemirror-lang-svelte@6.0.0", "", { "peerDependencies": { "@codemirror/autocomplete": "6.9.0", "@codemirror/lang-css": "6.3.1", "@codemirror/lang-html": "6.4.9", "@codemirror/lang-javascript": "6.2.4", "@codemirror/language": "6.9.0", "@codemirror/state": "6.4.1", "@codemirror/view": "6.18.0", "@lezer/common": "1.2.0", "@lezer/highlight": "1.2.0", "@lezer/javascript": "1.5.1", "@lezer/lr": "1.3.10" } }, "sha512-U2OqqgMM6jKelL0GNWbAmqlu1S078zZNoBqlJBW+retTc5M4Mha6/Y2cf4SVg6ddgloJvmcSpt4hHrVoM4ePRA=="],
+
+    "@resvg/resvg-js": ["@resvg/resvg-js@2.6.2", "", { "optionalDependencies": { "@resvg/resvg-js-android-arm-eabi": "2.6.2", "@resvg/resvg-js-android-arm64": "2.6.2", "@resvg/resvg-js-darwin-arm64": "2.6.2", "@resvg/resvg-js-darwin-x64": "2.6.2", "@resvg/resvg-js-linux-arm-gnueabihf": "2.6.2", "@resvg/resvg-js-linux-arm64-gnu": "2.6.2", "@resvg/resvg-js-linux-arm64-musl": "2.6.2", "@resvg/resvg-js-linux-x64-gnu": "2.6.2", "@resvg/resvg-js-linux-x64-musl": "2.6.2", "@resvg/resvg-js-win32-arm64-msvc": "2.6.2", "@resvg/resvg-js-win32-ia32-msvc": "2.6.2", "@resvg/resvg-js-win32-x64-msvc": "2.6.2" } }, "sha512-xBaJish5OeGmniDj9cW5PRa/PtmuVU3ziqrbr5xJj901ZDN4TosrVaNZpEiLZAxdfnhAe7uQ7QFWfjPe9d9K2Q=="],
+
+    "@resvg/resvg-js-android-arm-eabi": ["@resvg/resvg-js-android-arm-eabi@2.6.2", "", { "os": "android", "cpu": "arm" }, "sha512-FrJibrAk6v29eabIPgcTUMPXiEz8ssrAk7TXxsiZzww9UTQ1Z5KAbFJs+Z0Ez+VZTYgnE5IQJqBcoSiMebtPHA=="],
+
+    "@resvg/resvg-js-android-arm64": ["@resvg/resvg-js-android-arm64@2.6.2", "", { "os": "android", "cpu": "arm64" }, "sha512-VcOKezEhm2VqzXpcIJoITuvUS/fcjIw5NA/w3tjzWyzmvoCdd+QXIqy3FBGulWdClvp4g+IfUemigrkLThSjAQ=="],
+
+    "@resvg/resvg-js-darwin-arm64": ["@resvg/resvg-js-darwin-arm64@2.6.2", "", { "os": "darwin", "cpu": "arm64" }, "sha512-nmok2LnAd6nLUKI16aEB9ydMC6Lidiiq2m1nEBDR1LaaP7FGs4AJ90qDraxX+CWlVuRlvNjyYJTNv8qFjtL9+A=="],
+
+    "@resvg/resvg-js-darwin-x64": ["@resvg/resvg-js-darwin-x64@2.6.2", "", { "os": "darwin", "cpu": "x64" }, "sha512-GInyZLjgWDfsVT6+SHxQVRwNzV0AuA1uqGsOAW+0th56J7Nh6bHHKXHBWzUrihxMetcFDmQMAX1tZ1fZDYSRsw=="],
+
+    "@resvg/resvg-js-linux-arm-gnueabihf": ["@resvg/resvg-js-linux-arm-gnueabihf@2.6.2", "", { "os": "linux", "cpu": "arm" }, "sha512-YIV3u/R9zJbpqTTNwTZM5/ocWetDKGsro0SWp70eGEM9eV2MerWyBRZnQIgzU3YBnSBQ1RcxRZvY/UxwESfZIw=="],
+
+    "@resvg/resvg-js-linux-arm64-gnu": ["@resvg/resvg-js-linux-arm64-gnu@2.6.2", "", { "os": "linux", "cpu": "arm64" }, "sha512-zc2BlJSim7YR4FZDQ8OUoJg5holYzdiYMeobb9pJuGDidGL9KZUv7SbiD4E8oZogtYY42UZEap7dqkkYuA91pg=="],
+
+    "@resvg/resvg-js-linux-arm64-musl": ["@resvg/resvg-js-linux-arm64-musl@2.6.2", "", { "os": "linux", "cpu": "arm64" }, "sha512-3h3dLPWNgSsD4lQBJPb4f+kvdOSJHa5PjTYVsWHxLUzH4IFTJUAnmuWpw4KqyQ3NA5QCyhw4TWgxk3jRkQxEKg=="],
+
+    "@resvg/resvg-js-linux-x64-gnu": ["@resvg/resvg-js-linux-x64-gnu@2.6.2", "", { "os": "linux", "cpu": "x64" }, "sha512-IVUe+ckIerA7xMZ50duAZzwf1U7khQe2E0QpUxu5MBJNao5RqC0zwV/Zm965vw6D3gGFUl7j4m+oJjubBVoftw=="],
+
+    "@resvg/resvg-js-linux-x64-musl": ["@resvg/resvg-js-linux-x64-musl@2.6.2", "", { "os": "linux", "cpu": "x64" }, "sha512-UOf83vqTzoYQO9SZ0fPl2ZIFtNIz/Rr/y+7X8XRX1ZnBYsQ/tTb+cj9TE+KHOdmlTFBxhYzVkP2lRByCzqi4jQ=="],
+
+    "@resvg/resvg-js-win32-arm64-msvc": ["@resvg/resvg-js-win32-arm64-msvc@2.6.2", "", { "os": "win32", "cpu": "arm64" }, "sha512-7C/RSgCa+7vqZ7qAbItfiaAWhyRSoD4l4BQAbVDqRRsRgY+S+hgS3in0Rxr7IorKUpGE69X48q6/nOAuTJQxeQ=="],
+
+    "@resvg/resvg-js-win32-ia32-msvc": ["@resvg/resvg-js-win32-ia32-msvc@2.6.2", "", { "os": "win32", "cpu": "ia32" }, "sha512-har4aPAlvjnLcil40AC77YDIk6loMawuJwFINEM7n0pZviwMkMvjb2W5ZirsNOZY4aDbo5tLx0wNMREp5Brk+w=="],
+
+    "@resvg/resvg-js-win32-x64-msvc": ["@resvg/resvg-js-win32-x64-msvc@2.6.2", "", { "os": "win32", "cpu": "x64" }, "sha512-ZXtYhtUr5SSaBrUDq7DiyjOFJqBVL/dOBN7N/qmi/pO0IgiWW/f/ue3nbvu9joWE5aAKDoIzy/CxsY0suwGosQ=="],
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.0-beta.27", "", {}, "sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA=="],
 

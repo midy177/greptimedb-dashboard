@@ -165,7 +165,11 @@ a-layout.new-layout
 
   const timeWhere = computed(() => {
     if (rangeTime.value.length === 2) {
-      return `AND greptime_timestamp >= '${rangeTime.value[0]}' AND greptime_timestamp <= '${rangeTime.value[1]}'`
+      // rangeTime 存的是 unix 秒级时间戳字符串（如 '1783480627'），GreptimeDB 无法把
+      // 纯数字字符串解析成 Timestamp，故先转成 ISO 字符串（与 useTimeRange.timeRangeValues 一致）
+      const start = new Date(Number(rangeTime.value[0]) * 1000).toISOString()
+      const end = new Date(Number(rangeTime.value[1]) * 1000).toISOString()
+      return `AND greptime_timestamp >= '${start}' AND greptime_timestamp <= '${end}'`
     }
     if (time.value) {
       return `AND greptime_timestamp >= NOW() - INTERVAL '${time.value} minutes'`

@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Greptime Dashboard",
+  "productName": "NovoOne",
   "version": "0.8.24",
-  "identifier": "com.greptime",
+  "identifier": "com.novoone",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5177",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Greptime Dashboard",
+        "title": "NovoOne",
         "width": 1200,
         "height": 800,
         "resizable": true,

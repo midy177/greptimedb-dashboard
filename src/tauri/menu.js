@@ -16,7 +16,7 @@ async function setAppMenu() {
       action: () => {
         const webview = new WebviewWindow('client', {
           url: '/#/client/about',
-          title: 'About Greptime Dashboard',
+          title: 'About NovoOne',
           alwaysOnTop: true,
           center: true,
           height: 300,
@@ -40,7 +40,7 @@ async function setAppMenu() {
       items: [aboutItem, quitItem],
     })
     const menu = await Menu.new({
-      text: 'Greptime Dashboard',
+      text: 'NovoOne',
       items: [submenu],
     })
     await menu.setAsAppMenu()

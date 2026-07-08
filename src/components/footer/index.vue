@@ -1,7 +1,7 @@
 <template lang="pug">
 a-layout-footer.footer
   a-space(:size="20")
-    img.logo(:src="getIconUrl(`${role === 'cloud' ? 'cloud' : 'logo-text'}`)")
+    LogoNovooneText.logo
     a-space(:size="5")
       svg.service-icon
         use(href="#service")
@@ -35,6 +35,7 @@ a-layout-footer.footer
 
 <script lang="ts" setup>
   import { getIconUrl } from '@/utils'
+  import LogoNovooneText from '@/assets/images/logo-novoone-text.svg?component'
   import useLocale from '@/hooks/locale'
 
   const { host, regionVendor, regionLocation, regionCountry, serviceName, queryMode } = storeToRefs(useAppStore())
@@ -66,6 +67,7 @@ a-layout-footer.footer
   }
   .logo {
     height: 18px;
+    width: auto;
   }
   .service-name {
     color: var(--main-font-color);
@@ -115,6 +117,7 @@ a-layout-footer.footer
   }
   .logo {
     height: 18px;
+    width: auto;
   }
   .service-name {
     color: var(--main-font-color);

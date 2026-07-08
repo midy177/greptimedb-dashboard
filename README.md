@@ -1,4 +1,4 @@
-# GreptimeDB Dashboard
+# NovoOne Dashboard
 
 Dashboard is a data-visualization platform for [GreptimeDB](https://github.com/greptimeteam/greptimedb) developed with Vue3, Vite, TypeScript and Arco Design.
 

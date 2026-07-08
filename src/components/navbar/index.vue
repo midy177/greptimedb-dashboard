@@ -1,8 +1,7 @@
 <template lang="pug">
 a-layout.navbar
   a-layout-header.logo-space
-    svg.logo
-      use(href="#logo")
+    LogoNovooneMark.logo
   a-layout-content
     .new-query
     .menu
@@ -33,6 +32,7 @@ NewsModal(ref="newsModal" :news-list="newsListMutable" :loading="isLoadingNews")
   import { useI18n } from 'vue-i18n'
   import { listenerRouteChange } from '@/utils/route-listener'
   import { useNews } from '@/hooks/news'
+  import LogoNovooneMark from '@/assets/images/logo-novoone-mark.svg?component'
   import useMenuTree from '../menu/use-menu-tree'
   import NewsModal from './news-modal.vue'
 

@@ -440,7 +440,7 @@ a-card.editor-card(style="padding-bottom: 10px" :bordered="false")
     try {
       secondaryCodeRunning.value = true
       const res = await exportWithFormat(currentStatement.value, promForm, 'csvWithNames')
-      fileDownload(res, `export_${queryType.value}_greptimedb.csv`)
+      fileDownload(res, `export_${queryType.value}_novoone.csv`)
       Message.success('Exported successfully')
     } catch (error) {
       console.log(error)
