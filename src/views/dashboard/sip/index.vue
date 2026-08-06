@@ -17,6 +17,7 @@ a-layout.new-layout
       a-option(value="BYE") BYE
       a-option(value="CANCEL") CANCEL
       a-option(value="ACK") ACK
+      a-option(value="NOTIFY") NOTIFY
     a-button(type="primary" size="small" :loading="flowsLoading" @click="loadFlows")
       template(#icon)
         icon-loading(v-if="flowsLoading" spin)
